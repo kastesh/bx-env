@@ -5,29 +5,45 @@ BX_TEMPLATE=bx.template
 BX_TARGETDIR=sites-enabled
 WWW_DIR=/var/www/public_html
 
+TEMPLATE="${BX_WORKDIR}/${BX_TEMPLATE}"
+
 ########################
 # create nginx configs
 ########################
 if [[ ${BX_HOST_AUTOCREATE} == 1 ]]; then
 
-  cd ${WWW_DIR} || exit
+    # www directory doesn't exists => exit
+    cd ${WWW_DIR} || exit
 
-  [[ ! (-d "${BX_WORKDIR}/${BX_TARGETDIR}") ]] && mkdir -p "${BX_WORKDIR}/${BX_TARGETDIR}"
+    # create site-enable directory
+    [[ ! (-d "${BX_WORKDIR}/${BX_TARGETDIR}") ]] &&\
+        mkdir -p "${BX_WORKDIR}/${BX_TARGETDIR}"
 
-  for f in *
-  do
-    [[ ! (-d ${f}) ]] && continue
+    for f in *; do
 
-    TEMPLATE="${BX_WORKDIR}/${BX_TEMPLATE}"
+        # site is a subdirectroy in public_html
+        [[ ! (-d ${f}) ]] && continue
 
-    [[ ${f} =~ "." || ${BX_DEFAULT_LOCAL_DOMAIN} == '' ]] && HOST=${f} || HOST="${f}.${BX_DEFAULT_LOCAL_DOMAIN}"
-    [[ ${HOST} == ${BX_DEFAULT_HOST} ]] && DEFAULT=" default_server" || DEFAULT=""
+        # filename contains dot or not defined local domain
+        if [[ ${f} =~ "." || ${BX_DEFAULT_LOCAL_DOMAIN} == '' ]]; then 
+            HOST=${f}
+        else
+            HOST="${f}.${BX_DEFAULT_LOCAL_DOMAIN}"
+        fi
 
-    OUTPUT="${BX_WORKDIR}/${BX_TARGETDIR}/${HOST}.conf"
-    [[ -f ${OUTPUT} ]] && continue
+        if [[ ${HOST} == ${BX_DEFAULT_HOST} ]]; then 
+            DEFAULT=" default_server" 
+        else
+            DEFAULT=""
+        fi
 
-    touch "${OUTPUT}" && sed -e "s/%HOST%/${HOST}/; s/%NAME%/${f}/; s/%DEFAULT%/${DEFAULT}/" "${TEMPLATE}" > ${OUTPUT}
-  done
+        OUTPUT="${BX_WORKDIR}/${BX_TARGETDIR}/${HOST}.conf"
+
+        [[ -f ${OUTPUT} ]] && continue
+
+        touch "${OUTPUT}" && \
+            sed -e "s/%HOST%/${HOST}/; s/%NAME%/${f}/; s/%DEFAULT%/${DEFAULT}/" "${TEMPLATE}" > ${OUTPUT}
+    done
 
 fi
 ########################

@@ -14,7 +14,7 @@ COPY ./php-fpm.d /usr/local/etc/php-fpm.d/
 COPY ./exim/update-exim4.conf.conf /etc/exim4/
 
 RUN apt-get update \
-    && apt-get install -y vim exim4 \
+    && apt-get install -y vim exim4 zip unzip default-mysql-client \
     && echo "syntax on" > ~/.vimrc \
     && apt-get -y install \
         libmagickwand-dev \
@@ -44,11 +44,19 @@ RUN groupadd -g ${CONTAINER_GID} ${CONTAINER_GROUP} && \
     useradd -u ${CONTAINER_UID} -g ${CONTAINER_GID} ${CONTAINER_USER}
 
 RUN chmod -R 777 /usr/local/etc/php/ && \
-    chown -R ${CONTAINER_USER} /usr/local/etc/php/ && \
-    curl -sS https://getcomposer.org/installer | php ; mv composer.phar /usr/bin/composer && \
-    composer global require "fxp/composer-asset-plugin:@stable" && \
-    update-exim4.conf -v
+    chown -R ${CONTAINER_USER} /usr/local/etc/php/ 
+#    && \
+#    curl -sS https://getcomposer.org/installer | php ; mv composer.phar /usr/bin/composer && \
+#    composer global require "fxp/composer-asset-plugin:@stable" && \
+#    update-exim4.conf -v
 
 RUN sed -i "1 a xdebug.remote_host="${XDEBUG_IP} /usr/local/etc/php/conf.d/xdebug.ini
 
-ENTRYPOINT php-fpm -F
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod 0755 /usr/local/bin/docker-entrypoint.sh
+
+COPY ./bitrix /tmp/bitrix/
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+
+CMD ["php-fpm"]
