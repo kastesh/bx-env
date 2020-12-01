@@ -107,6 +107,8 @@ services:
       - BX_DEFAULT_LOCAL_DOMAIN=${BX_DEFAULT_LOCAL_DOMAIN}
       - BX_HOST_AUTOCREATE=${BX_HOST_AUTOCREATE}
       - MYSQL_ROOT_PASSWORD=${BX_MYSQL_ROOT_PASSWORD}
+      - SECURITY_KEY=${BX_PUSH_SECURITY_KEY}
+      - BX_PUSH_PUB_HOST=${BX_PUSH_PUB_HOST}
     volumes:
       - ${BX_LOGS_PATH}/php-fpm:/var/log/php-fpm
     volumes_from:

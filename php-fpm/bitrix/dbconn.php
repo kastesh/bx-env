@@ -27,8 +27,9 @@ define("MYSQL_TABLE_TYPE", "INNODB");
 define("VM_INSTALL", true);
 
 define("BX_UTF", true);
-define("BX_CRONTAB_SUPPORT", true);
+define("BX_CRONTAB_SUPPORT", false);
 define("BX_COMPRESSION_DISABLED", true);
+define("BX_USE_MYSQLI", true);
 
 define("BX_DISABLE_INDEX_PAGE", true);
 

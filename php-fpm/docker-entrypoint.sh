@@ -13,6 +13,8 @@ DB_FILE=db.sql
 SITE_FILE=files.zip
 USER=bitrix
 GROUP=bitrix
+LOG_DIR=/var/log/php
+EXC_LOG=$LOG_DIR/exceptions.log
 
 # mysql config
 MY_CNF="${WWW_DIR}/my.cnf"
@@ -162,7 +164,9 @@ cfg_site(){
         sed -e "s/%DBHOST%/mysql/; \
                 s/%DBNAME%/$PROJECT/; \
                 s/%DBLOGIN%/$PROJECT/; \
-                s/%DBPASSWORD%/$PASSWORD/;" > ./bitrix/.settings.php
+                s/%DBPASSWORD%/$PASSWORD/; \
+                s/%SECURITY_KEY%/$SECURITY_KEY/; \
+                s/%BX_PUSH_PUB_HOST%/$BX_PUSH_PUB_HOST/;" > ./bitrix/.settings.php
     echo "+++ Update ./bitrix/.settings.php"
 
     # Update dbconn.php
@@ -176,7 +180,14 @@ cfg_site(){
 
     # Create /var/www/public_html/.bx_temp/%HOST%
     [[ ! -d /var/www/public_html/.bx_temp/$dir ]] && \
-        mkdir -p /var/www/public_html/.bx_temp/$dir
+        mkdir -p /var/www/public_html/.bx_temp/$dir && \
+        chown -R ${USER}:${GROUP} /var/www/public_html/.bx_temp/$dir
+
+    # Create exception log directory
+    [[ ! -d $LOG_DIR ]] && \
+        mkdir $LOG_DIR -p && \
+        touch $EXC_LOG  && \
+        chown -R ${USER}:${GROUP} $LOG_DIR
 
     popd 1>/dev/null 2>&1
 }
