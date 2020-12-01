@@ -1,0 +1,34 @@
+{
+    "servers": [
+        {
+            "name": "${MODE}-${LISTEN_PORT}",
+            "port": ${LISTEN_PORT},
+            "hostname": "${LISTEN_HOSTNAME}",
+            "backlog": 1024,
+            "routes": {
+                "sub": "${SUB_URI}"
+            }
+        }
+    ],
+    "dataDir": "${WORKDIR}/data",
+    "trustClients": false,
+    "clusterMode": true,
+    "processUniqueId": "${MODE}-${LISTEN_PORT}",
+    "storage": {
+        "type": "redis",
+        "messageTLL": 86400,
+        "channelTLL": 86400,
+        "onlineTLL": 120,
+        "onlineDelta": 10,
+        "host": "${REDIS_HOST}",
+        "port": ${REDIS_PORT}
+    },
+    "security": {
+        "key": "${SECURITY_KEY}"
+    },
+    "debug": {
+        "folderName": "/var/log/push-server",
+        "ip": ["127.0.0.1"],
+        "trustProxy": true
+    }
+}

@@ -37,11 +37,9 @@ services:
           - redis
 
   push-server-sub:
-    image: ikarpovich/bitrix-push-server
+    image: push
     container_name: bx-push-sub
     restart: always
-    build:
-      context: ./push-server
     environment:
       - REDIS_HOST=redis
       - LISTEN_HOSTNAME=0.0.0.0
@@ -60,11 +58,9 @@ services:
           - ${BX_PUSH_SUB_HOST}
 
   push-server-pub:
-    image: ikarpovich/bitrix-push-server
+    image: push
     container_name: bx-push-pub
     restart: always
-    build:
-      context: ./push-server
     environment:
       - REDIS_HOST=redis
       - LISTEN_HOSTNAME=0.0.0.0
