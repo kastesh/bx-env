@@ -6,9 +6,6 @@
 
 version: '2'
 
-volumes:
-  mysql_data:
-
 services:
 
   mounts:
@@ -72,52 +69,6 @@ services:
         aliases:
           - ${BX_PUSH_PUB_HOST}
 
-  mysql:
-    build:
-      context: ./mysql
-      args:
-        - BX_MYSQL_IMAGE=${BX_MYSQL_IMAGE}
-    container_name: bx-mysql
-    restart: always
-    environment:
-      - MYSQL_ROOT_PASSWORD=${BX_MYSQL_ROOT_PASSWORD}
-      - BX_MYSQL_IMAGE=${BX_MYSQL_IMAGE}
-    ports:
-      - 3306:3306
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ${BX_LOGS_PATH}/mysql:/var/log/mysql
-    networks:
-      bx:
-        aliases:
-          - mysql
-
-  php-fpm:
-    extends:
-      file: ./common-services.yml
-      service: server
-    build:
-      context: ./php-fpm
-      args:
-        - XDEBUG_IP="${BX_XDEBUG_IP}"
-    container_name: bx-php-fpm
-    restart: always
-    environment:
-      - BX_DEFAULT_HOST=${BX_DEFAULT_HOST}
-      - BX_DEFAULT_LOCAL_DOMAIN=${BX_DEFAULT_LOCAL_DOMAIN}
-      - BX_HOST_AUTOCREATE=${BX_HOST_AUTOCREATE}
-      - MYSQL_ROOT_PASSWORD=${BX_MYSQL_ROOT_PASSWORD}
-      - SECURITY_KEY=${BX_PUSH_SECURITY_KEY}
-      - BX_PUSH_PUB_HOST=${BX_PUSH_PUB_HOST}
-    volumes:
-      - ${BX_LOGS_PATH}/php-fpm:/var/log/php-fpm
-    volumes_from:
-      - mounts
-    networks:
-      bx:
-        aliases:
-          - php-fpm
-
   nginx:
     extends:
       file: ./common-services.yml
@@ -133,6 +84,10 @@ services:
       - BX_DEFAULT_HOST=${BX_DEFAULT_HOST}
       - BX_DEFAULT_LOCAL_DOMAIN=${BX_DEFAULT_LOCAL_DOMAIN}
       - BX_HOST_AUTOCREATE=${BX_HOST_AUTOCREATE}
+      - BX_PUSH_PUB_HOST=${BX_PUSH_PUB_HOST}
+      - BX_PUSH_PUB_PORT=${BX_PUSH_PUB_PORT}
+      - BX_PUSH_SUB_HOST=${BX_PUSH_SUB_HOST}
+      - BX_PUSH_SUB_PORT=${BX_PUSH_SUB_PORT}
     volumes_from:
       - mounts
     volumes:

@@ -1,4 +1,4 @@
-FROM php:7.3-fpm
+FROM php:7.1-fpm
 
 ARG APCU_VERSION=5.1.18
 
@@ -35,22 +35,13 @@ RUN apt-get update \
     && docker-php-ext-install -j$(nproc) gd \
     && docker-php-ext-install mysqli pdo_mysql opcache exif intl sockets bz2 zip \
     && docker-php-ext-configure opcache --enable-opcache \
-#    && pecl install -o -f redis \
-#    && docker-php-ext-enable redis \
-    && rm -rf /tmp/* /var/cache/apk/* /var/lib/apt/lists/* \
-    && pecl install xdebug && docker-php-ext-enable xdebug
+    && rm -rf /tmp/* /var/cache/apk/* /var/lib/apt/lists/* 
 
 RUN groupadd -g ${CONTAINER_GID} ${CONTAINER_GROUP} && \
     useradd -u ${CONTAINER_UID} -g ${CONTAINER_GID} ${CONTAINER_USER}
 
 RUN chmod -R 777 /usr/local/etc/php/ && \
     chown -R ${CONTAINER_USER} /usr/local/etc/php/ 
-#    && \
-#    curl -sS https://getcomposer.org/installer | php ; mv composer.phar /usr/bin/composer && \
-#    composer global require "fxp/composer-asset-plugin:@stable" && \
-#    update-exim4.conf -v
-
-RUN sed -i "1 a xdebug.remote_host="${XDEBUG_IP} /usr/local/etc/php/conf.d/xdebug.ini
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod 0755 /usr/local/bin/docker-entrypoint.sh

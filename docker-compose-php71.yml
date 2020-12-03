@@ -1,0 +1,42 @@
+##
+## https://github.com/sidigi/bitrix-docker/blob/master/docker-compose.yml
+## https://github.com/spiritabsolute/bitrix-env-dev/blob/master/docker-compose.yml
+##
+
+
+version: '2'
+
+services:
+  mounts:
+    image: busybox
+    container_name: bx-www
+    volumes:
+      - ${BX_PUBLIC_HTML_PATH}:/var/www/public_html
+      - ${BX_MODULES_PATH}:/media/bitrix/modules
+
+  php71:
+    extends:
+      file: ./common-services.yml
+      service: server
+    build:
+      context: ./php71
+    container_name: bx-php-fpm71
+    restart: always
+    environment:
+      - BX_DEFAULT_HOST=${BX_DEFAULT_HOST}
+      - BX_DEFAULT_LOCAL_DOMAIN=${BX_DEFAULT_LOCAL_DOMAIN}
+      - BX_HOST_AUTOCREATE=${BX_HOST_AUTOCREATE}
+      - MYSQL_ROOT_PASSWORD=${BX_MYSQL_ROOT_PASSWORD}
+      - SECURITY_KEY=${BX_PUSH_SECURITY_KEY}
+      - BX_PUSH_PUB_HOST=${BX_PUSH_PUB_HOST}
+      - BX_PUSH_PUB_PORT=${BX_PUSH_PUB_PORT}
+    volumes:
+      - ${BX_LOGS_PATH}/php-fpm:/var/log/php-fpm
+    volumes_from:
+      - mounts
+    networks:
+      bx:
+        aliases:
+          - php71
+networks:
+  bx:

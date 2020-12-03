@@ -1,0 +1,31 @@
+##
+## https://github.com/sidigi/bitrix-docker/blob/master/docker-compose.yml
+## https://github.com/spiritabsolute/bitrix-env-dev/blob/master/docker-compose.yml
+##
+
+
+version: '2'
+
+volumes:
+  mysql_data80:
+
+services:
+
+  mysql80:
+    build:
+      context: ./mysql80
+    container_name: bx-mysql80
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=${BX_MYSQL_ROOT_PASSWORD}
+      - BX_MYSQL_IMAGE=${BX_MYSQL_IMAGE}
+    ports:
+      - 3306:3306
+    volumes:
+      - mysql_data80:/var/lib/mysql
+      - ${BX_LOGS_PATH}/mysql:/var/log/mysql
+    networks:
+      bx:
+        aliases:
+          - mysql80
+

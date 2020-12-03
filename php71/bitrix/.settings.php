@@ -10,7 +10,7 @@ return array (
         'path_to_mobile_listener_secure' => 'https://#DOMAIN#:8894/bitrix/sub/',
         'path_to_websocket' => 'ws://#DOMAIN#/bitrix/subws/',
         'path_to_websocket_secure' => 'wss://#DOMAIN#/bitrix/subws/',
-        'path_to_publish' => 'http://%BX_PUSH_PUB_HOST%:8895/bitrix/pub/',
+        'path_to_publish' => 'http://%BX_PUSH_PUB_HOST%:%BX_PUSH_PUB_PORT%/bitrix/pub/',
         'path_to_publish_web' => 'http://#DOMAIN#/bitrix/rest/',
         'path_to_publish_web_secure' => 'https://#DOMAIN#/bitrix/rest/',
         'nginx_version' => '4',

@@ -1,0 +1,35 @@
+##
+## https://github.com/sidigi/bitrix-docker/blob/master/docker-compose.yml
+## https://github.com/spiritabsolute/bitrix-env-dev/blob/master/docker-compose.yml
+##
+
+
+version: '2'
+
+services:
+  php72:
+    extends:
+      file: ./common-services.yml
+      service: server
+    build:
+      context: ./php72
+    container_name: bx-php-fpm71
+    restart: always
+    environment:
+      - BX_DEFAULT_HOST=${BX_DEFAULT_HOST}
+      - BX_DEFAULT_LOCAL_DOMAIN=${BX_DEFAULT_LOCAL_DOMAIN}
+      - BX_HOST_AUTOCREATE=${BX_HOST_AUTOCREATE}
+      - MYSQL_ROOT_PASSWORD=${BX_MYSQL_ROOT_PASSWORD}
+      - SECURITY_KEY=${BX_PUSH_SECURITY_KEY}
+      - BX_PUSH_PUB_HOST=${BX_PUSH_PUB_HOST}
+      - BX_PUSH_PUB_PORT=${BX_PUSH_PUB_PORT}
+    volumes:
+      - ${BX_LOGS_PATH}/php-fpm:/var/log/php-fpm
+    volumes_from:
+      - mounts
+    networks:
+      bx:
+        aliases:
+          - php72
+          - php
+

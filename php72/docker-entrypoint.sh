@@ -8,7 +8,7 @@
 # MYSQL_ROOT_PASSWORD - mysql root password
 # BX_MYSQL_IMAGE - version
 
-WWW_DIR=/var/www/public_html
+WWW_DIR=/var/www/public_html/php72
 DB_FILE=db.sql
 SITE_FILE=files.zip
 USER=bitrix
@@ -19,6 +19,8 @@ EXC_LOG=$LOG_DIR/exceptions.log
 # mysql config
 MY_CNF="${WWW_DIR}/my.cnf"
 MY_RUNNING=0
+
+MYSQL_VERS=(mysql57 mysql80)
 
 basic_single_escape () {
     echo "$1" | sed 's/\(['"'"'\]\)/\\\1/g'
@@ -37,6 +39,7 @@ randpw(){
 
 create_my_cnf(){
     local cfg=${1:-$MY_CNF}
+    local host=${2:-mysql}
 
     echo "++ Create $MY_CNF"
 
@@ -44,7 +47,7 @@ create_my_cnf(){
     echo '[client]' > $cfg
     echo 'user=root' >> $cfg
     echo "password='$esc_pass'" >> $cfg
-	echo 'host=mysql' >> $cfg
+	echo "host=$host" >> $cfg
 
 }
 
@@ -89,8 +92,9 @@ ping_mysql(){
 
 create_mysql_db(){
     dump="${1}"
+    myhost="${2:-mysql}"
 
-	[[ ! -f $MY_CNF ]] && create_my_cnf
+	[[ ! -f $MY_CNF ]] && create_my_cnf "$MY_CNF" "$myhost"
 
     [[ $MY_RUNNING -eq 0 ]] && ping_mysql
 
@@ -144,12 +148,16 @@ cfg_site(){
 
     pushd $dir 1>/dev/null 2>&1 || exit
 
+    MYSQL_VERSION=$(echo $(pwd) | \
+        awk -F'/' '{print $(NF-1)}')
+
+
     # run DB configuration only if there files
     [[ ! -f $DB_FILE ]] && return 1
     [[ ! -f $SITE_FILE ]] && return 2
     [[ -f .BITRIX_CONFIG ]] && return 3
 
-    create_mysql_db "$DB_FILE"
+    create_mysql_db "$DB_FILE" "$MYSQL_VERSION"
     [[ $? -gt 0 ]] && return 1
     echo "+++ Created DB $PROJECT"
 
@@ -161,17 +169,18 @@ cfg_site(){
 
     # Update settings.php
     cat /tmp/bitrix/.settings.php | \
-        sed -e "s/%DBHOST%/mysql/; \
+        sed -e "s/%DBHOST%/$MYSQL_VERSION/; \
                 s/%DBNAME%/$PROJECT/; \
                 s/%DBLOGIN%/$PROJECT/; \
                 s/%DBPASSWORD%/$PASSWORD/; \
                 s/%SECURITY_KEY%/$SECURITY_KEY/; \
-                s/%BX_PUSH_PUB_HOST%/$BX_PUSH_PUB_HOST/;" > ./bitrix/.settings.php
+                s/%BX_PUSH_PUB_HOST%/$BX_PUSH_PUB_HOST/; \
+                s/%BX_PUSH_PUB_PORT%/$BX_PUSH_PUB_PORT/" > ./bitrix/.settings.php
     echo "+++ Update ./bitrix/.settings.php"
 
     # Update dbconn.php
     cat /tmp/bitrix/dbconn.php | \
-         sed -e "s/%DBHOST%/mysql/; \
+         sed -e "s/%DBHOST%/$MYSQL_VERSION/; \
                 s/%DBNAME%/$PROJECT/; \
                 s/%DBLOGIN%/$PROJECT/; \
                 s/%DBPASSWORD%/$PASSWORD/; \
@@ -197,14 +206,25 @@ cfg_sites(){
     pushd $WWW_DIR 1>/dev/null 2>&1 || exit
     echo "Processing $WWW_DIR"
 
-    for f in *; do
-        [[ ! ( -d ${f} ) ]] && continue
-        [[ ${f} =~ ".bx_temp" ]] && continue
+    for fm in *; do
+        [[ ! ( -d ${fm} ) ]] && continue
+        [[ ${fm} =~ ".bx_temp" ]] && continue
 
-        echo "+ $f"
-        cfg_site "${f}"
-        echo "  return $?"
+        if [[ $(printf "%s\n" "${MYSQL_VERS[@]}" | \
+            grep -cP "^$fm$") -gt 0   ]]; then
+            
+            # mysql 80
+            pushd $fm || exit
+            for f in *; do
+                [[ ! ( -d ${f} ) ]] && continue
 
+                echo "+ $f"
+                cfg_site "${f}"
+                echo "  return $?"
+            done
+
+            popd 
+        fi
     done
     popd 1>/dev/null 2>&1 
 }

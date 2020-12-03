@@ -7,13 +7,70 @@ WWW_DIR=/var/www/public_html
 
 TEMPLATE="${BX_WORKDIR}/${BX_TEMPLATE}"
 
+PHP_VERS=(php71 php72 php73 php74)
+MYSQL_VERS=(mysql57 mysql80)
+
+
+create_config(){
+    f="${1}"
+
+    [[ -z $f ]] && return 1
+
+    echo "Processing $f"
+
+    fname=$(basename $f)
+    fdir=$(dirname $f)
+
+    if [[ $f =~ "/" ]]; then
+        php_version=$(echo ${f} | \
+            awk -F'/' '{print $(NF-2)}')
+        mysql_version=$(echo ${f} | \
+            awk -F'/' '{print $(NF-1)}')
+    fi
+
+    if [[ -z $php_version ]]; then
+        php_version=php
+    fi
+
+    # filename contains dot or not defined local domain
+    if [[ ${fname} =~ "." || ${BX_DEFAULT_LOCAL_DOMAIN} == '' ]]; then 
+        HOST=${fname}
+    else
+        HOST="${fname}.${BX_DEFAULT_LOCAL_DOMAIN}"
+    fi
+
+    if [[ ${HOST} == ${BX_DEFAULT_HOST} ]]; then 
+        DEFAULT=" default_server" 
+    else
+        DEFAULT=""
+    fi
+
+    OUTPUT="${BX_WORKDIR}/${BX_TARGETDIR}/${HOST}.conf"
+
+    [[ -f ${OUTPUT} ]] && return 1
+
+    touch "${OUTPUT}" && \
+        sed -e "s:%HOST%:${HOST}:g; \
+            s:%NAME%:${f}:g; \
+            s:%DEFAULT%:${DEFAULT}:g; \
+            s:%PHPFPM%:${php_version}:g; \
+            s:%PUB_HOST%:$BX_PUSH_PUB_HOST:g; \
+            s:%PUB_PORT%:$BX_PUSH_PUB_PORT:g; \
+            s:%SUB_HOST%:$BX_PUSH_SUB_HOST:g; \
+            s:%SUB_PORT%:$BX_PUSH_SUB_PORT:g" \
+        "${TEMPLATE}" > ${OUTPUT}
+    echo "Create config: $OUTPUT"
+
+    return 0
+}
+
 ########################
 # create nginx configs
 ########################
 if [[ ${BX_HOST_AUTOCREATE} == 1 ]]; then
 
     # www directory doesn't exists => exit
-    cd ${WWW_DIR} || exit
+    pushd ${WWW_DIR} >/dev/null 2>&1 || exit
 
     # create site-enable directory
     [[ ! (-d "${BX_WORKDIR}/${BX_TARGETDIR}") ]] &&\
@@ -23,27 +80,39 @@ if [[ ${BX_HOST_AUTOCREATE} == 1 ]]; then
 
         # site is a subdirectroy in public_html
         [[ ! (-d ${f}) ]] && continue
+        
+        # defined php 
+        if [[ $(printf "%s\n" "${PHP_VERS[@]}" | \
+            grep -cP "^$f$") -gt 0 ]]; then
 
-        # filename contains dot or not defined local domain
-        if [[ ${f} =~ "." || ${BX_DEFAULT_LOCAL_DOMAIN} == '' ]]; then 
-            HOST=${f}
-        else
-            HOST="${f}.${BX_DEFAULT_LOCAL_DOMAIN}"
+            # pushd php71
+            pushd $f >/dev/null 2>&1 || exit
+            for pf in *; do
+            
+                if [[ $(printf "%s\n" "${MYSQL_VERS[@]}" | \
+                    grep -cP "^$pf$") -gt 0  ]]; then
+
+                    # pushd mysql80
+                    pushd $pf >/dev/null 2>&1 || exit
+
+                    # test.site
+                    for vf in *; do
+                        [[ ! ( -d $vf ) ]] && continue
+
+                        create_config "${f}/${pf}/${vf}" 
+                    done
+
+                    popd >/dev/null 2>&1 # return php71
+                fi
+            done
+            popd >/dev/null 2>&1  # return basedir 
+            continue
         fi
+        create_config "${f}"
 
-        if [[ ${HOST} == ${BX_DEFAULT_HOST} ]]; then 
-            DEFAULT=" default_server" 
-        else
-            DEFAULT=""
-        fi
-
-        OUTPUT="${BX_WORKDIR}/${BX_TARGETDIR}/${HOST}.conf"
-
-        [[ -f ${OUTPUT} ]] && continue
-
-        touch "${OUTPUT}" && \
-            sed -e "s/%HOST%/${HOST}/; s/%NAME%/${f}/; s/%DEFAULT%/${DEFAULT}/" "${TEMPLATE}" > ${OUTPUT}
     done
+
+    popd >/dev/null 2>&1
 
 fi
 ########################
