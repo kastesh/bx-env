@@ -8,7 +8,8 @@
 # MYSQL_ROOT_PASSWORD - mysql root password
 # BX_MYSQL_IMAGE - version
 
-WWW_DIR=/var/www/public_html/php73
+PHPVER=php73
+WWW_DIR=/var/www/public_html/$PHPVER
 DB_FILE=db.sql
 SITE_FILE=files.zip
 USER=bitrix
@@ -186,6 +187,10 @@ cfg_site(){
                 s/%DBPASSWORD%/$PASSWORD/; \
                 s/%HOST%/$dir/;" > ./bitrix/php_interface/dbconn.php
     echo "+++ Update ./bitrix/php_interface/dbconn.php"
+
+    # Create .BITRIX_CONFIG
+    echo "$dir:$PROJECT:$DBHOST:$PHPVER" > .BITRIX_CONFIG
+    rm -f $DB_FILE && rm -f $SITE_FILE
 
     # Create /var/www/public_html/.bx_temp/%HOST%
     [[ ! -d /var/www/public_html/.bx_temp/$dir ]] && \

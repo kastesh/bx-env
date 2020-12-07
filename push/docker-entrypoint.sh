@@ -45,18 +45,28 @@ pushd $WORKDIR || \
 [[ $MODE == "pub" || $MODE == "sub" ]] || \
 	error "Incorrect value in MODE=$MODE variable."
 
+log "MODE=$MODE"
 if [[ $MODE == "pub" ]]; then
 	TEMPLATE=$PUB_TMPL
     [[ -z $REST_URI ]] && REST_URI="/bitrix/rest/"
-    [[ -z $PUB_URI ]] && PUB_URI="/bitrix/pub"
+    [[ -z $PUB_URI ]] && PUB_URI="/bitrix/pub/"
+    log "REST_URI=$REST_URI"
+    log "PUB_URI=$PUB_URI"
+
     export REST_URI
     export PUB_URI
 elif [[ $MODE == "sub" ]]; then
 	TEMPLATE=$SUB_TMPL
-    [[ -z $SUB_URI ]] && SUB_URI="/bitrix/sub"
+    log "SUB_URI=$SUB_URI"
+    [[ -z $SUB_URI ]] && SUB_URI="/bitrix/subws/"
     export SUB_URI
 fi
 
+popd
+
+
+log "Create $CONFIG"
 envsubst <$TEMPLATE >$CONFIG
 
+log "Start server"
 node server.js --config $CONFIG

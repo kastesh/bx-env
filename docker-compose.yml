@@ -24,51 +24,6 @@ services:
         aliases:
           - memcache
 
-  redis:
-    image: redis
-    container_name: bx-redis
-    restart: always
-    networks:
-      bx:
-        aliases:
-          - redis
-
-  push-server-sub:
-    image: push
-    container_name: bx-push-sub
-    restart: always
-    environment:
-      - REDIS_HOST=redis
-      - LISTEN_HOSTNAME=0.0.0.0
-      - LISTEN_PORT=${BX_PUSH_SUB_PORT}
-      - SECURITY_KEY=${BX_PUSH_SECURITY_KEY}
-      - MODE=sub
-    ports:
-      - ${BX_PUSH_SUB_PORT}:${BX_PUSH_SUB_PORT}
-    labels:
-      - traefik.port=${BX_PUSH_SUB_PORT}
-      - traefik.protocol=http
-      - traefik.frontend.rule=Host:${BX_PUSH_SUB_HOST}
-    networks:
-      bx:
-        aliases:
-          - ${BX_PUSH_SUB_HOST}
-
-  push-server-pub:
-    image: push
-    container_name: bx-push-pub
-    restart: always
-    environment:
-      - REDIS_HOST=redis
-      - LISTEN_HOSTNAME=0.0.0.0
-      - LISTEN_PORT=${BX_PUSH_PUB_PORT}
-      - SECURITY_KEY=${BX_PUSH_SECURITY_KEY}
-      - MODE=pub
-    networks:
-      bx:
-        aliases:
-          - ${BX_PUSH_PUB_HOST}
-
   nginx:
     extends:
       file: ./common-services.yml

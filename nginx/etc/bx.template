@@ -8,15 +8,40 @@ server {
 
     client_max_body_size 1024m;
 
-    access_log /var/log/nginx/access-%HOST%.log;
+	try_files       $uri @bitrix;
+
+    access_log /var/log/nginx/access-%HOST%.log jsonlog;
     error_log /var/log/nginx/error-%HOST%.log;
 
-    if (!-e $request_filename) {
-       rewrite  ^(.*)$  /bitrix/urlrewrite.php last;
+    location ~* ^.+\.(jpg|jpeg|gif|png|svg|js|css|mp3|ogg|mpe?g|avi|zip|gz|bz2?|rar|eot|otf|ttf|woff|woff2)$ {
+        log_not_found off;
+        access_log off;
+        expires 30d;
+        add_header Cache-Control public;
     }
 
+    location ~ (/bitrix/modules|/upload/support/not_image|/bitrix/php_interface|local/modules|local/php_interface) {
+        deny all;
+    }
+
+    location ~ /.git/ {
+        deny all;
+    }
+
+    location ~ /vendor/ {
+        deny all;
+    }
+
+    location ~ /composer {
+        deny all;
+    }
+
+    location ~ /.gitignore {
+        deny all;
+    }
+
+
 	location ~* ^/bitrix/subws/ {
-    	access_log off;
     	proxy_pass http://%SUB_HOST%:%SUB_PORT%;
     	# http://blog.martinfjordvald.com/2013/02/websockets-in-nginx/
     	# 12h+0.5
@@ -28,7 +53,6 @@ server {
 	}
 
 	location ~* ^/bitrix/sub/ {
-    	access_log off;
     	rewrite ^/bitrix/sub/(.*)$ /bitrix/subws/$1 break;
     	proxy_pass http://%SUB_HOST%:%SUB_PORT%;
     	proxy_max_temp_file_size 0;
@@ -36,7 +60,6 @@ server {
 	}
 
 	location ~* ^/bitrix/rest/ {
-    	access_log off;
     	proxy_pass http://%PUB_HOST%:%PUB_PORT%;
     	proxy_max_temp_file_size 0;
     	proxy_read_timeout  43800;
@@ -118,32 +141,14 @@ server {
         access_log off;
     }
 
-    location ~* ^.+\.(jpg|jpeg|gif|png|svg|js|css|mp3|ogg|mpe?g|avi|zip|gz|bz2?|rar|eot|otf|ttf|woff|woff2)$ {
-        log_not_found off;
-        access_log off;
-        expires 30d;
-        add_header Cache-Control public;
-    }
-
-    location ~ (/bitrix/modules|/upload/support/not_image|/bitrix/php_interface|local/modules|local/php_interface) {
-        deny all;
-    }
-
-    location ~ /.git/ {
-        deny all;
-    }
-
-    location ~ /vendor/ {
-        deny all;
-    }
-
-    location ~ /composer {
-        deny all;
-    }
-
-    location ~ /.gitignore {
-        deny all;
-    }
+	location @bitrix {
+        include 				fastcgi_params;
+        fastcgi_pass 			%PHPFPM%:9000;
+        fastcgi_index 			index.php;
+        fastcgi_send_timeout 	21600;
+        fastcgi_read_timeout 	21600;	
+    	fastcgi_param SCRIPT_FILENAME $document_root/bitrix/urlrewrite.php;
+	}
 
     error_page 404 /404.html;
 

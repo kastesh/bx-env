@@ -17,7 +17,6 @@
     ],
     "publishMode": true,
     "dataDir": "${WORKDIR}/data",
-    "trustClients": false,
     "processUniqueId": "${MODE}-${LISTEN_PORT}",
     "clusterMode": true,
     "storage": {
@@ -41,7 +40,7 @@
     },
     "debug": {
         "folderName": "/var/log/push-server",
-        "ip": ["127.0.0.1"],
+        "ip": ["127.0.0.1", "192.168.0.0/16"],
         "trustProxy": true
     }
 }
