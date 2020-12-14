@@ -7,29 +7,31 @@
 version: '2'
 
 services:
-  php72:
+  nginx:
     extends:
       file: ./common-services.yml
       service: server
     build:
-      context: ./php72
-    container_name: bx-php72
+      context: ./nginx
+    ports:
+      - 80:80
+      - 443:443
+    container_name: bx-nginx
     restart: always
     environment:
       - BX_DEFAULT_HOST=${BX_DEFAULT_HOST}
       - BX_DEFAULT_LOCAL_DOMAIN=${BX_DEFAULT_LOCAL_DOMAIN}
       - BX_HOST_AUTOCREATE=${BX_HOST_AUTOCREATE}
-      - MYSQL_ROOT_PASSWORD=${BX_MYSQL_ROOT_PASSWORD}
-      - SECURITY_KEY=${BX_PUSH_SECURITY_KEY}
       - BX_PUSH_PUB_HOST=${BX_PUSH_PUB_HOST}
       - BX_PUSH_PUB_PORT=${BX_PUSH_PUB_PORT}
-    volumes:
-      - ${BX_LOGS_PATH}/php-fpm:/var/log/php-fpm
+      - BX_PUSH_SUB_HOST=${BX_PUSH_SUB_HOST}
+      - BX_PUSH_SUB_PORT=${BX_PUSH_SUB_PORT}
     volumes_from:
       - mounts
+    volumes:
+      - ${BX_LOGS_PATH}/nginx:/var/log/nginx
     networks:
       bx:
         aliases:
-          - php72
-          - php
+          - nginx
 

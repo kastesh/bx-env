@@ -13,7 +13,7 @@ services:
       service: server
     build:
       context: ./php73
-    container_name: bx-php-fpm71
+    container_name: bx-php73
     restart: always
     environment:
       - BX_DEFAULT_HOST=${BX_DEFAULT_HOST}
