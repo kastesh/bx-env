@@ -65,3 +65,15 @@ status_docker(){
 
     return $is_service
 }
+
+create_random_key() {
+    randLength=32
+    rndStr=</dev/urandom tr -dc A-F0-9 | head -c $randLength
+    echo $rndStr
+}
+
+create_random_password() {
+    randLength=16
+    rndStr=</dev/urandom tr -dc A-Za-z0-9 | head -c $randLength
+    echo $rndStr
+}

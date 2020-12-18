@@ -7,13 +7,6 @@
 version: '2'
 
 services:
-  mounts:
-    image: busybox
-    container_name: bx-www
-    volumes:
-      - ${BX_PUBLIC_HTML_PATH}:/var/www/public_html
-      - ${BX_MODULES_PATH}:/media/bitrix/modules
-
   php71:
     extends:
       file: ./common-services.yml
