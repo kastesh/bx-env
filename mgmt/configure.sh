@@ -21,7 +21,7 @@ usage(){
 }
 
 # getopts
-while getopts ":c:l:vh" opt; do
+while getopts ":c:lvh" opt; do
     case $opt in
         "h") usage 0;;
         "v") VERBOSE=1;;
@@ -125,13 +125,13 @@ if [[ $(echo "$user_answer" | grep -cwi "y") -gt 0 ]]; then
     ENV_CONF=$PROJECT_DIR/.env
     ENV_CONF_DEFAULT=$PROJECT_DIR/.env.default
     cat "$ENV_CONF_DEFAULT" | \
-        sed -e "s:%BX_PUBLIC_HTML_PATH%:$HTML_PATH: \
-                s:%BX_LOGS_PATH%:$LOG_DIR: \
-                s:%BX_MYSQL_ROOT_PASSWORD%:$MYSQL_PASSWORD: \
-                s:%BX_PUSH_SUB_HOST%:sub.$DEFAULT_DOMAIN: \
-                s:%BX_PUSH_PUB_HOST%:pub.$DEFAULT_DOMAIN: \
-                s:%BX_PUSH_SECURITY_KEY%:$PUSH_KEY: \
-                s:%BX_DEFAULT_HOST%:$DEFAULT_SITENAME: \
+        sed -e "s:%BX_PUBLIC_HTML_PATH%:$HTML_PATH:; \
+                s:%BX_LOGS_PATH%:$LOG_DIR:; \
+                s:%BX_MYSQL_ROOT_PASSWORD%:$MYSQL_PASSWORD:; \
+                s:%BX_PUSH_SUB_HOST%:sub.$DEFAULT_DOMAIN:; \
+                s:%BX_PUSH_PUB_HOST%:pub.$DEFAULT_DOMAIN:; \
+                s:%BX_PUSH_SECURITY_KEY%:$PUSH_KEY:; \
+                s:%BX_DEFAULT_HOST%:$DEFAULT_SITENAME:; \
                 s:%BX_DEFAULT_LOCAL_DOMAIN%:$DEFAULT_DOMAIN:" > $ENV_CONF
     log "Update config file $ENV_CONF"
 
