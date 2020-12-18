@@ -15,16 +15,18 @@ usage(){
     echo "-h  - show this help message"
     echo "-v  - enable verbose mode"
     echo "-c  - config file (default: $PROGPATH/CONFIG)"
+    echo "-l  - local installation; created html folders"
 
     exit $rtn
 }
 
 # getopts
-while getopts ":c:vh" opt; do
+while getopts ":c:l:vh" opt; do
     case $opt in
         "h") usage 0;;
         "v") VERBOSE=1;;
         "c") CONFIG=$OPTARG;;
+        "l") IS_LOCAL=1;;
         \?) echo "ERROR: Incorrect option -$opt"
             usage 1 ;;
     esac
@@ -132,6 +134,26 @@ if [[ $(echo "$user_answer" | grep -cwi "y") -gt 0 ]]; then
                 s:%BX_DEFAULT_HOST%:$DEFAULT_SITENAME: \
                 s:%BX_DEFAULT_LOCAL_DOMAIN%:$DEFAULT_DOMAIN:" > $ENV_CONF
     log "Update config file $ENV_CONF"
+
+    # create folders
+	if [[ $IS_LOCAL -gt 0 ]]; then
+		[[ ! -d $HTML_PATH ]] && mkdir -p $HTML_PATH
+		pushd $HTML_PATH 
+
+		# php list
+		for ver in ${PHP_VERSIONS[@]}; do
+
+            for myver in ${MYSQL_VERSIONS[@]}; do
+                if [[ ! -d ${ver}/${myver} ]]; then
+                    mkdir -p "${ver}/${myver}"
+                    log "Create ${ver}/${myver}"
+                fi
+            done
+        done
+        popd
+    fi
+
+
 fi
 
 
