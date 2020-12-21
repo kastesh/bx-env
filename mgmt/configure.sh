@@ -15,18 +15,20 @@ usage(){
     echo "-h  - show this help message"
     echo "-v  - enable verbose mode"
     echo "-c  - config file (default: $PROGPATH/CONFIG)"
+    echo "-b  - build docker images (default: disable)"
     echo "-l  - local installation; created html folders"
 
     exit $rtn
 }
 
 # getopts
-while getopts ":c:lvh" opt; do
+while getopts ":c:blvh" opt; do
     case $opt in
         "h") usage 0;;
         "v") VERBOSE=1;;
         "c") CONFIG=$OPTARG;;
         "l") IS_LOCAL=1;;
+		"b") IS_BUILD=1;;
         \?) echo "ERROR: Incorrect option -$opt"
             usage 1 ;;
     esac
@@ -35,6 +37,8 @@ done
 # deafult values
 [[ -z $VERBOSE ]]   && VERBOSE=0
 [[ -z $CONFIG ]]    && CONFIG=$PROGPATH/CONFIG
+[[ -z $IS_LOCAL ]]  && IS_LOCAL=0
+[[ -z $IS_BUILD ]] && IS_BUILD=0
 
 [[ -n $LOG_DIR ]] && LOG=$LOG_DIR/configure.log
 
@@ -154,6 +158,21 @@ if [[ $(echo "$user_answer" | grep -cwi "y") -gt 0 ]]; then
     fi
 
 
+  	# build images
+    if [[ $IS_BUILD -gt 0 ]]; then
+        pushd $PROJECT_DIR
+
+        for dir in $(find ./ -maxdepth 1 -type d ! -name "." ! -name ".git"); do
+            if [[ -f $dir/Dockerfile ]]; then
+                name=$(basename $dir)
+
+                pushd $dir
+                docker build . --tag $name
+                popd
+            fi
+        done
+        popd
+    fi
 fi
 
 
