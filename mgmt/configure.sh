@@ -50,7 +50,9 @@ create_configs(){
             "The path on the Docker server where the modules will be located: " \
             MODULES_PATH
         if [[ -z $MODULES_PATH ]]; then
-            error "The option MODULES_PATH cannot be empty."
+            log "Set modules path to default"
+            MODULES_PATH=/var/bx/modules
+            [[ ! -d $MODULES_PATH ]] && mkdir -p $MODULES_PATH
         fi
     fi
 
