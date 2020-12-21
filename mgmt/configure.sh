@@ -43,19 +43,14 @@ create_configs(){
 
     # каталог модулей
     read -p \
-        "Do you want to include the bitrix module directory (N|y)?" \
-        user_answer
-    if [[ $(echo "$user_answer" | grep -wci "y") -gt 0 ]]; then
-        read -p \
-            "The path on the Docker server where the modules will be located: " \
-            MODULES_PATH
-        if [[ -z $MODULES_PATH ]]; then
-            log "Set modules path to default"
-            MODULES_PATH=/var/bx/modules
-            [[ ! -d $MODULES_PATH ]] && mkdir -p $MODULES_PATH
-        fi
+        "The path on the Docker server where the modules will be located: " \
+        MODULES_PATH
+    if [[ -z $MODULES_PATH ]]; then
+        log "Set modules path to default"
+        MODULES_PATH=/var/bx/modules
+        [[ ! -d $MODULES_PATH ]] && mkdir -p $MODULES_PATH
     fi
-
+ 
 
     # каталог со всем проектом  bx-env
     PROJECT_DIR_DEFAULT=$(dirname $PROGPATH)
