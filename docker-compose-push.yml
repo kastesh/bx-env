@@ -20,6 +20,8 @@ services:
   push-server-sub:
     image: push
     container_name: bx-push-sub
+    build:
+      context: ./push
     restart: always
     environment:
       - REDIS_HOST=redis
@@ -42,6 +44,8 @@ services:
     image: push
     container_name: bx-push-pub
     restart: always
+    build:
+      context: ./push
     environment:
       - REDIS_HOST=redis
       - LISTEN_HOSTNAME=0.0.0.0
