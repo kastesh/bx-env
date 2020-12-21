@@ -114,6 +114,10 @@ create_configs(){
                 s:%BX_PUSH_SECURITY_KEY%:$PUSH_KEY:; \
                 s:%BX_DEFAULT_HOST%:$DEFAULT_SITENAME:; \
                 s:%BX_DEFAULT_LOCAL_DOMAIN%:$DEFAULT_DOMAIN:" > $ENV_CONF
+        [[ -n $MODULES_PATH ]] && \
+            echo "BX_MODULES_PATH=$MODULES_PATH" >> $ENV_CONF
+
+
         log "Update config file $ENV_CONF"
     fi
 
