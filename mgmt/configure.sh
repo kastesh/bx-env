@@ -1,8 +1,10 @@
 #!/bin/bash
 #set -x
 
-PROGNAME=$(basename $0)
-PROGPATH=$(dirname $0)
+FULLPATH=$(realpath $0)
+
+PROGNAME=$(basename $FULLPATH)
+PROGPATH=$(dirname $FULLPATH)
 
 source $PROGPATH/common.sh || exit 255
 
@@ -75,8 +77,7 @@ fi
 
 
 # каталог со всем проектом  bx-env
-CURR_DIR=$(pwd)
-PROJECT_DIR_DEFAULT=$(dirname $CURR_DIR)
+PROJECT_DIR_DEFAULT=$(dirname $PROGPATH)
 read -p \
     "The directory where the bx-env project is located ($PROJECT_DIR_DEFAULT): " \
     PROJECT_DIR
