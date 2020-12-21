@@ -6,11 +6,7 @@
 
 version: '2'
 
-volumes:
-  mysql_data57:
-
 services:
-
   mysql57:
     build:
       context: ./mysql57
@@ -21,7 +17,6 @@ services:
     ports:
       - 3306:3306
     volumes:
-      - mysql_data57:/var/lib/mysql
       - ${BX_LOGS_PATH}/mysql:/var/log/mysql
     networks:
       bx:

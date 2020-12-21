@@ -6,9 +6,6 @@
 
 version: '2'
 
-volumes:
-  mysql_data80:
-
 services:
 
   mysql80:
@@ -21,7 +18,6 @@ services:
     ports:
       - 3306:3306
     volumes:
-      - mysql_data80:/var/lib/mysql
       - ${BX_LOGS_PATH}/mysql:/var/log/mysql
     networks:
       bx:

@@ -12,7 +12,7 @@ source $PROGPATH/common.sh || exit 255
 usage(){
     rtn=${1:-0}
 
-    echo "Usage: $PROGNAME -s site_name"
+    echo "Usage: $PROGNAME [-vhblC] [-c /path/to/config]"
     echo "Options:"
     echo "-h  - show this help message"
     echo "-v  - enable verbose mode"
@@ -47,9 +47,21 @@ create_configs(){
         MODULES_PATH
     if [[ -z $MODULES_PATH ]]; then
         log "Set modules path to default"
-        MODULES_PATH=/var/bx/modules
+        MODULES_PATH=$PROJECT_DIR/var/modules
         [[ ! -d $MODULES_PATH ]] && mkdir -p $MODULES_PATH
     fi
+
+    # mysql57
+    #read -p \
+    #    "The path to mysql path: " \
+    #    MYSQL_PATH
+    #if [[ -z $MYSQL_PATH ]]; then
+    #    log "MySQL path set to default value: $PROJECT_DIR/var/mysql"
+    #    MYSQL_PATH=$PROJECT_DIR/var/mysql
+    #fi
+    #[[ ! -d $MYSQL_PATH ]] && mkdir -p $MYSQL_PATH
+    #[[ ! -d $MYSQL_PATH/mysql57 ]] && mkdir -p $MYSQL_PATH/mysql57
+    #[[ ! -d $MYSQL_PATH/mysql80 ]] && mkdir -p $MYSQL_PATH/mysql80
  
 
     # каталог со всем проектом  bx-env
@@ -66,7 +78,7 @@ create_configs(){
         "Log directory: " \
         LOG_DIR
     if [[ -z $LOG_DIR ]]; then
-        LOG_DIR=$CURR_DIR/.logs
+        LOG_DIR=$CURR_DIR/logs
     fi
     mkdir -p $LOG_DIR
 
@@ -88,6 +100,7 @@ create_configs(){
     log "DISTR_URL=\"$DISTR_URL\""
     log "HTML_PATH=\"$HTML_PATH\""
     log "PROJECT_DIR=\"$PROJECT_DIR\""
+    log "MYSQL_PATH=\"$MYSQL_PATH\""
     log "DEFAULT_DOMAIN=\"$DEFAULT_DOMAIN\""
     log "DEFAULT_SITENAME=\"$DEFAULT_SITENAME\""
     log "PUSH_KEY=\"$PUSH_KEY\""
@@ -100,6 +113,7 @@ create_configs(){
         echo -e "HTML_PATH=\"$HTML_PATH\"\n" >> $CONFIG
         echo -e "PROJECT_DIR=\"$PROJECT_DIR\"\n" >> $CONFIG
         echo -e "LOG_DIR=\"$LOG_DIR\"" >> $CONFIG
+        echo -e "MYSQL_PATH=\"$MYSQL_PATH\"" >> $CONFIG
         log "Update config file $CONFIG"
 
         # обновляем конфиг docker-composer
@@ -109,6 +123,8 @@ create_configs(){
         sed -e "s:%BX_PUBLIC_HTML_PATH%:$HTML_PATH:; \
                 s:%BX_LOGS_PATH%:$LOG_DIR:; \
                 s:%BX_MYSQL_ROOT_PASSWORD%:$MYSQL_PASSWORD:; \
+                s:%BX_MYSQL57_PATH%:$MYSQL_PATH/mysql57:; \
+                s:%BX_MYSQL80_PATH%:$MYSQL_PATH/mysql80:; \
                 s:%BX_PUSH_SUB_HOST%:sub.$DEFAULT_DOMAIN:; \
                 s:%BX_PUSH_PUB_HOST%:pub.$DEFAULT_DOMAIN:; \
                 s:%BX_PUSH_SECURITY_KEY%:$PUSH_KEY:; \

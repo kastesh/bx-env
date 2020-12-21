@@ -27,9 +27,11 @@ RUN apt-get update \
         libpng-dev \
         libxml2-dev \
         --no-install-recommends \
-    && pecl install imagick apcu-${APCU_VERSION} memcached \
+    && pecl install imagick \
     && docker-php-ext-enable imagick \
+    && pecl install apcu-${APCU_VERSION} \
     && docker-php-ext-enable apcu \
+    && pecl install memcached \
     && docker-php-ext-enable memcached \
     && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \
     && docker-php-ext-install -j$(nproc) gd \

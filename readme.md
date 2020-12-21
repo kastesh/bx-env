@@ -16,11 +16,92 @@
 ## Быстрый старт
 
 1. Клонируйте или скачайте репозиторий
-2. Скопируйте содержимое файла `.env.default` в файл `.env`
-3. В файле `.env` внесите необходимые изменения
-4. Выполните команду `docker-compose up`
+2. Конфигурация локальной установки
+3. Настройка сайта
 
-## Конфигурирование  
+### Конфигурация локальной установки
+Для конфигурации используете:
+```
+./mgmt/configure.sh -h
+Usage: configure.sh [-vhblC] [-c /path/to/config]
+Options:
+-h  - show this help message
+-v  - enable verbose mode
+-c  - config file (default: mgmt/CONFIG)
+-b  - build docker images (default: disable)
+-l  - local installation; created html folders
+-C  - disable configuration creation
+```
+По умолчанию, данный скрипт создаст два конфигурационных файла:
+| Файл | Описание |
+| --- | --- |
+| `mgmt/CONFIG` | конфигурационный файл, для работы скриптов |
+| `.env` | файл, содержащий переменные окружения для docker-compose |
+
+Пример использования:
+```
+./mgmt/configure.sh -v -l
+2020/12/21T23:26: [29311]> Start configuration of Docker Env
+URL to the prepared distribution directory: http://distr.bx/distrs
+The path on the Docker server where the site directories will be located: /var/bx/sites
+The path on the Docker server where the modules will be located: /var/bx/modules
+The directory where the bx-env project is located (/vagrant/bx-env):
+Log directory: /vagrant/bx-env/logs
+Enter default domain name for sites(example ksh.bx): example.bx
+Enter default sitename: (default example.bx):
+...
+```
+
+### Хранилище архивов сайтов
+Веб сервер, который хранит бэкапы баз и файлов для тех иили иных версий Bitrix-окружения.
+На сервере distr.bx можно найти следующую структуру и файлы:
+```
+VERSION
+|---- SITE_TYPE.zip
+|---- SITE_TYPE.sql
+```
+Где SITE_TYPE.zip - это архив файлов для сайта, а SITE_TYPE.sql -  это бэкап базы; VERSION -  версия продукта, TYPE - тип (например, shop или b24).
+
+Например,
+```
+ls distrs/20.200.300/
+b24.sql  b24.zip  shopcrm.sql  shopcrm.zip  shop.sql  shop.zip
+```
+
+### Создание сайта
+Для создания контейнеров под сайт, определенного типа используйте следующий скрипт:
+```
+./mgmt/run_site.sh -h
+Usage: run_site.sh -s site_name -p php_version -m mysql_version -a archive_name
+Options:
+-h  - show this help message
+-v  - enable verbose mode
+-s  - site name
+-p  - php version (default: php72)
+-m  - mysql version (default: mysql57)
+-a  - archive name (example: 20.200.300/b24)
+-c  - config file (default: ./mgmt/CONFIG)
+```
+Например,
+```
+mgmt/run_site.sh -a 20.200.300/shop -p php73 -m mysql57 -s shop73.bx -v
+```
+Выполнит следующие действия:
+1. Скачает файлы архивов 20.200.300/shop в каталог сайта
+2. Поднимет все необходимые для работы контейнеры
+
+При последюущих запусках для других сайтов:
+1. Перезапустит контейнер, если это требуется (например, контейнер bx-nginx при добавлении нового сайта)
+2. Запустит недостающие контейнеры (например, второй сайт создан с другой версией php)
+
+### Удаление усстановки
+Для удаления установки используете  скрипт:
+```
+./mgmt/clean_all.sh
+```
+Полностью удалит все запущенные контейнеры и почистит каталог сайтов.
+
+## Конфигурационный файл
 Для настройки используются переменные окружения, указываемые в файле `.env`. Полный список можно найти в файле `.env.default`.  
 
 **BX_PUBLIC_HTML_PATH**  
@@ -31,9 +112,6 @@
 
 **BX_LOGS_PATH**  
 путь к директории в которой контейнеры должны хранить логи, монтируется в контейнеры, внутри каждый из контейнеров создаст свою папку  
-
-**BX_MYSQL_IMAGE**  
-образ для контейнера mysql, по умолчанию используется percona:5.7, но можно использовать mysql, в т.ч. mysql:8  
 
 **BX_MYSQL_ROOT_PASSWORD**  
 пароль для root пользователя mysql  
