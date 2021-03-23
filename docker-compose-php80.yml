@@ -1,0 +1,23 @@
+##
+## https://github.com/sidigi/bitrix-docker/blob/master/docker-compose.yml
+## https://github.com/spiritabsolute/bitrix-env-dev/blob/master/docker-compose.yml
+##
+
+
+version: '3'
+
+services:
+  php80:
+    image: repodocker.office.bitrix.ru/php80
+    container_name: bx-php80
+    restart: always
+    env_file: .env
+    volumes:
+      - bx-logs:/var/log/php-fpm
+      - bx-public:/var/www/public_html
+      - bx-modules:/media/bitrix/modules
+    networks:
+      bx:
+        aliases:
+          - php80
+
