@@ -4,20 +4,18 @@
 ##
 
 
-version: '2'
+version: '3'
 
 services:
   mysql57:
-    build:
-      context: ./mysql57
+    image: repodocker.office.bitrix.ru/bx-mysql57
     container_name: bx-mysql57
     restart: always
-    environment:
-      - MYSQL_ROOT_PASSWORD=${BX_MYSQL_ROOT_PASSWORD}
+    env_file: .env
     ports:
-      - 3306:3306
+      - 3306:3307
     volumes:
-      - ${BX_LOGS_PATH}/mysql:/var/log/mysql
+      - bx-logs/mysql57:/var/log/mysql
     networks:
       bx:
         aliases:

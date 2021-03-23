@@ -4,32 +4,21 @@
 ##
 
 
-version: '2'
+version: '3'
 
 services:
   nginx:
-    extends:
-      file: ./common-services.yml
-      service: server
-    build:
-      context: ./nginx
+    image: repodocker.office.bitrix.ru/bx-nginx
     ports:
       - 80:80
       - 443:443
     container_name: bx-nginx
     restart: always
-    environment:
-      - BX_DEFAULT_HOST=${BX_DEFAULT_HOST}
-      - BX_DEFAULT_LOCAL_DOMAIN=${BX_DEFAULT_LOCAL_DOMAIN}
-      - BX_HOST_AUTOCREATE=${BX_HOST_AUTOCREATE}
-      - BX_PUSH_PUB_HOST=${BX_PUSH_PUB_HOST}
-      - BX_PUSH_PUB_PORT=${BX_PUSH_PUB_PORT}
-      - BX_PUSH_SUB_HOST=${BX_PUSH_SUB_HOST}
-      - BX_PUSH_SUB_PORT=${BX_PUSH_SUB_PORT}
-    volumes_from:
-      - mounts
+    env_file: .env
     volumes:
-      - ${BX_LOGS_PATH}/nginx:/var/log/nginx
+      - bx-logs/nginx:/var/log/nginx
+      - bx-public:/var/www/public_html
+      - bx-modules:/media/bitrix/modules
     networks:
       bx:
         aliases:

@@ -4,29 +4,18 @@
 ##
 
 
-version: '2'
+version: '3'
 
 services:
   php74:
-    extends:
-      file: ./common-services.yml
-      service: server
-    build:
-      context: ./php74
+    image: repodocker.office.bitrix.ru/php74
     container_name: bx-php74
     restart: always
-    environment:
-      - BX_DEFAULT_HOST=${BX_DEFAULT_HOST}
-      - BX_DEFAULT_LOCAL_DOMAIN=${BX_DEFAULT_LOCAL_DOMAIN}
-      - BX_HOST_AUTOCREATE=${BX_HOST_AUTOCREATE}
-      - MYSQL_ROOT_PASSWORD=${BX_MYSQL_ROOT_PASSWORD}
-      - SECURITY_KEY=${BX_PUSH_SECURITY_KEY}
-      - BX_PUSH_PUB_HOST=${BX_PUSH_PUB_HOST}
-      - BX_PUSH_PUB_PORT=${BX_PUSH_PUB_PORT}
+    env_file: .env
     volumes:
-      - ${BX_LOGS_PATH}/php-fpm:/var/log/php-fpm
-    volumes_from:
-      - mounts
+      - bx-logs:/var/log/php-fpm
+      - bx-public:/var/www/public_html
+      - bx-modules:/media/bitrix/modules
     networks:
       bx:
         aliases:
