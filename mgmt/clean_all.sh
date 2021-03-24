@@ -77,6 +77,12 @@ clean_folders(){
     done
     popd
 
+    pushd $LOG_DIR
+    rm -rf php7{1,2,3,4} php80 mysql{57,80} nginx push
+    mkdir php7{1,2,3,4} php80 mysql{57,80} nginx push
+    popd
+
+
 }
 # getopts
 while getopts ":s:c:vh" opt; do

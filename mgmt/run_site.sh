@@ -23,6 +23,8 @@ usage(){
 }
 
 run_site(){
+    IS_HTTP=$(echo "$DISTR_URL" | grep -c '^http')
+
     # copy files
     DB="$DISTR_URL/${ARCHIVE}.sql"
     ARCH="$DISTR_URL/${ARCHIVE}.zip"
@@ -31,10 +33,19 @@ run_site(){
     if [[ ! -d $SITE_DIR ]]; then
         mkdir -p $SITE_DIR
         pushd $SITE_DIR >/dev/null 2>&1
-        log "Download ${ARCHIVE}.sql"
-        curl -s "$DB" --output db.sql
-        log "Download ${ARCHIVE}.zip"
-        curl -s "$ARCH" --output files.zip
+        if [[ $IS_HTTP -gt 0 ]]; then
+            log "Download DB=${ARCHIVE}.sql"
+            curl -s "$DB" --output db.sql
+            log "Download Files=${ARCHIVE}.zip"
+            curl -s "$ARCH" --output files.zip
+        else 
+
+            log "Copy DB=${ARCHIVE}.sql"
+            cp -f $DB db.sql
+            log "Copy Files=${ARCHIVE}.zip"
+            cp -f $ARCH files.zip
+        fi
+
         log "Upload files to $SITE_DIR"
         popd >/dev/null 2>&1
     fi

@@ -6,14 +6,22 @@
 
 version: '3'
 
+volumes:
+  bx-logs-php72:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ${BX_LOGS_PATH}/php72
+
 services:
   php72:
-    image: repodocker.office.bitrix.ru/php72
+    image: repodocker.office.bitrix.ru/bx-php72
     container_name: bx-php72
     restart: always
     env_file: .env
     volumes:
-      - bx-logs:/var/log/php-fpm
+      - bx-logs-php72:/var/log/php-fpm
       - bx-public:/var/www/public_html
       - bx-modules:/media/bitrix/modules
     networks:

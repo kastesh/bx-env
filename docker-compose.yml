@@ -19,12 +19,6 @@ volumes:
       o: bind
       type: none
       device: ${BX_MODULES_PATH}
-  bx-logs:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: ${BX_LOGS_PATH}
 
 services:
 

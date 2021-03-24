@@ -6,6 +6,14 @@
 
 version: '3'
 
+volumes:
+  bx-logs-nginx:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ${BX_LOGS_PATH}/nginx
+
 services:
   nginx:
     image: repodocker.office.bitrix.ru/bx-nginx
@@ -16,7 +24,7 @@ services:
     restart: always
     env_file: .env
     volumes:
-      - bx-logs/nginx:/var/log/nginx
+      - bx-logs-nginx:/var/log/nginx
       - bx-public:/var/www/public_html
       - bx-modules:/media/bitrix/modules
     networks:

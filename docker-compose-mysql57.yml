@@ -6,6 +6,15 @@
 
 version: '3'
 
+volumes:
+  bx-logs-mysql57:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ${BX_LOGS_PATH}/mysql57
+  bx-mysql57:
+
 services:
   mysql57:
     image: repodocker.office.bitrix.ru/bx-mysql57
@@ -15,7 +24,8 @@ services:
     ports:
       - 3306:3307
     volumes:
-      - bx-logs/mysql57:/var/log/mysql
+      - bx-logs-mysql57:/var/log/mysql
+      - bx-mysql57:/var/lib/mysql
     networks:
       bx:
         aliases:

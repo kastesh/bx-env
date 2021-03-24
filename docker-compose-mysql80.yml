@@ -5,6 +5,14 @@
 
 
 version: '3'
+volumes:
+  bx-logs-mysql80:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ${BX_LOGS_PATH}/mysql80
+  bx-mysql80:
 
 services:
   mysql80:
@@ -16,6 +24,7 @@ services:
       - 3306:3308
     volumes:
       - bx-logs/mysql80:/var/log/mysql
+      - bx-mysql80:/var/lib/mysql
     networks:
       bx:
         aliases:

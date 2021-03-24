@@ -25,30 +25,51 @@ usage(){
 }
 
 create_configs(){
-    # список подготовленных дистрибутивов
+    PROJECT_USER_DEFAULT=$(stat -c "%U" $(tty))
     read -p \
-        "URL to the prepared distribution directory: " \
+        "The runtime user ($PROJECT_USER_DEFAULT): " \
+        PROJECT_USER
+    if [[ -z $PROJECT_USER ]]; then
+        PROJECT_USER=$PROJECT_USER_DEFAULT
+    fi
+
+
+    # список подготовленных дистрибутивов
+    DISTR_URL_DEFAULT=$(echo $HOME)/distrs
+    read -p \
+        "URL or PATH to the prepared distribution directory ($DISTR_URL_DEFAULT): " \
         DISTR_URL
     if [[ -z $DISTR_URL ]]; then
-        error "The option DISTR_URL cannot be empty."
+        log "Set distrs url to default."
+        DISTR_URL=$DISTR_URL_DEFAULT
+        [[ ! -d $DISTR_URL ]] && mkdir -p $DISTR_URL
+        chown -R $PROJECT_USER $DISTR_URL
     fi
 
     # каталог сайтов
+    HTML_PATH_DEFAULT=$(echo $HOME)/sites
     read -p \
-        "The path on the Docker server where the site directories will be located: " \
+        "The path on the Docker server where the site directories will be located ($HTML_PATH_DEFAULT): " \
         HTML_PATH
+ 
     if [[ -z $HTML_PATH ]]; then
-        error "The option HTML_PATH cannot be empty."
+        log "Set sites path to default."
+        HTML_PATH=$HTML_PATH_DEFAULT
+        [[ ! -d $HTML_PATH ]] && mkdir -p $HTML_PATH
+        chown -R $PROJECT_USER $HTML_PATH
     fi
 
     # каталог модулей
+    MODULES_PATH_DEFAULT=$(echo $HOME)/modules
     read -p \
-        "The path on the Docker server where the modules will be located: " \
+        "The path on the Docker server where the modules will be located ($MODULES_PATH_DEFAULT): " \
         MODULES_PATH
     if [[ -z $MODULES_PATH ]]; then
         log "Set modules path to default"
-        MODULES_PATH=$PROJECT_DIR/var/modules
-        [[ ! -d $MODULES_PATH ]] && mkdir -p $MODULES_PATH
+        MODULES_PATH=$MODULES_PATH_DEFAULT
+        [[ ! -d $MODULES_PATH ]] && \
+            mkdir -p $MODULES_PATH && \
+            chown -R $PROJECT_USER $MODULES_PATH
     fi
 
     # mysql57
@@ -74,13 +95,20 @@ create_configs(){
     fi
 
     # каталог логов
+    LOG_DIR_DEFAULT=$(echo $HOME)/logs
     read -p \
-        "Log directory: " \
+        "Log directory ($LOG_DIR_DEFAULT): " \
         LOG_DIR
     if [[ -z $LOG_DIR ]]; then
-        LOG_DIR=$CURR_DIR/logs
+        log "Set log path to default."
+        LOG_DIR=$LOG_DIR_DEFAULT
     fi
-    mkdir -p $LOG_DIR
+
+    [[ ! -d $LOG_DIR ]] && mkdir -p $LOG_DIR
+    pushd $LOG_DIR 1>/dev/null 2>&1
+    mkdir php7{1,2,3,4} php80 mysql{57,80} nginx push 2>/dev/null
+    popd 1>/dev/null 2>&1
+    chown $PROJECT_USER $LOG_DIR -R
 
     read -p \
         "Enter default domain name for sites(example ksh.bx): " \
@@ -104,6 +132,7 @@ create_configs(){
     log "DEFAULT_DOMAIN=\"$DEFAULT_DOMAIN\""
     log "DEFAULT_SITENAME=\"$DEFAULT_SITENAME\""
     log "PUSH_KEY=\"$PUSH_KEY\""
+    log "USER=\"$PROJECT_USER\""
 
     read -p "Please confirm to save the selected options (N|y): " user_answer
 
@@ -158,6 +187,7 @@ create_folders(){
         for myver in ${MYSQL_VERSIONS[@]}; do
             if [[ ! -d ${ver}/${myver} ]]; then
                 mkdir -p "${ver}/${myver}"
+                chown -R $PROJECT_USER "${ver}" 
                 log "Create ${ver}/${myver}"
             fi
         done

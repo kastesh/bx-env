@@ -6,6 +6,14 @@
 
 version: '3'
 
+volumes:
+  bx-logs-push:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ${BX_LOGS_PATH}/push
+
 services:
 
   redis:
@@ -28,6 +36,8 @@ services:
       - traefik.port=${BX_PUSH_SUB_PORT}
       - traefik.protocol=http
       - traefik.frontend.rule=Host:${BX_PUSH_SUB_HOST}
+    volumes:
+      - bx-logs-push:/var/log/push-server
     networks:
       bx:
         aliases:
@@ -37,9 +47,9 @@ services:
     image: repodocker.office.bitrix.ru/bx-push
     container_name: bx-push-pub
     restart: always
-    build:
-      context: ./push
     env_file: .env
+    volumes:
+      - bx-logs-push:/var/log/push-server
     networks:
       bx:
         aliases:
