@@ -6,11 +6,11 @@ ARG CONTAINER_USER=bitrix
 ARG CONTAINER_GROUP=bitrix
 
 
-
 RUN groupadd -g ${CONTAINER_GID} ${CONTAINER_GROUP} && \
     useradd -u ${CONTAINER_UID} -g ${CONTAINER_GID} ${CONTAINER_USER}
 
 COPY ./etc/ /etc/nginx/
+COPY ./bitrixenv_error/ /var/www/bitrixenv_error/
 
 RUN envsubst < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 

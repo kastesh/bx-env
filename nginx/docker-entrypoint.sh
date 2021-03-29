@@ -3,6 +3,7 @@
 BX_WORKDIR=/etc/nginx
 BX_TEMPLATE=bx.template
 BX_TARGETDIR=sites-enabled
+BX_INCLUDES=includes
 WWW_DIR=/var/www/public_html
 
 TEMPLATE="${BX_WORKDIR}/${BX_TEMPLATE}"
@@ -53,14 +54,17 @@ create_config(){
         sed -e "s:%HOST%:${HOST}:g; \
             s:%NAME%:${f}:g; \
             s:%DEFAULT%:${DEFAULT}:g; \
-            s:%PHPFPM%:${php_version}:g; \
-            s:%PUB_HOST%:$BX_PUSH_PUB_HOST:g; \
+            s:%PHPFPM%:${php_version}:g;" \
+       "${TEMPLATE}" > ${OUTPUT}
+    echo "Create config: $OUTPUT"
+
+    sed -i "s:%PUB_HOST%:$BX_PUSH_PUB_HOST:g; \
             s:%PUB_PORT%:$BX_PUSH_PUB_PORT:g; \
             s:%SUB_HOST%:$BX_PUSH_SUB_HOST:g; \
             s:%SUB_PORT%:$BX_PUSH_SUB_PORT:g" \
-        "${TEMPLATE}" > ${OUTPUT}
-    echo "Create config: $OUTPUT"
-
+            "${BX_WORKDIR}/${BX_INCLUDES}/push.conf"
+    echo "Update ${BX_WORKDIR}/${BX_INCLUDES}/push.conf"
+ 
     return 0
 }
 

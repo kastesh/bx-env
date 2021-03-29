@@ -8,13 +8,15 @@
 # MYSQL_ROOT_PASSWORD - mysql root password
 # BX_MYSQL_IMAGE - version
 
-PHPVER=php71
+PHPVER=php$(php --version | egrep -o "PHP\s+[0-9\.]+" | \
+    awk '{print $2}' | awk -F'.' '{printf  "%d%d", $1, $2}')
+
 WWW_DIR=/var/www/public_html/$PHPVER
 DB_FILE=db.sql
 SITE_FILE=files.zip
 USER=bitrix
 GROUP=bitrix
-LOG_DIR=/var/log/php
+LOG_DIR=/var/log/php-fpm
 EXC_LOG=$LOG_DIR/exceptions.log
 
 # mysql config
@@ -189,7 +191,7 @@ cfg_site(){
     echo "+++ Update ./bitrix/php_interface/dbconn.php"
 
     # Create .BITRIX_CONFIG
-    echo "$dir:$PROJECT:$DBHOST:$PHPVER" > .BITRIX_CONFIG
+    echo "$dir:$PROJECT:$MYSQL_VERSION:$PHPVER" > .BITRIX_CONFIG
     rm -f $DB_FILE && rm -f $SITE_FILE
 
     # Create /var/www/public_html/.bx_temp/%HOST%

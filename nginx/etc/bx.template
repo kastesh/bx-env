@@ -2,109 +2,25 @@ server {
     listen 80%DEFAULT%;
 
     server_name %HOST%;
-    set $docroot /var/www/public_html/%NAME%;
+    set $docroot /var/www/public_html/php74/mysql57/%NAME%;
     root $docroot;
-    index index.php index.html;
 
     client_max_body_size 1024m;
 
-	try_files       $uri @bitrix;
+    access_log /var/log/nginx/access-%NAME%.bx.log jsonlog;
+    error_log /var/log/nginx/error-%NAME%.bx.log;
 
-    access_log /var/log/nginx/access-%HOST%.log jsonlog;
-    error_log /var/log/nginx/error-%HOST%.log;
+    # error pages
+    include includes/error_page.conf;
 
-    location ~* ^.+\.(jpg|jpeg|gif|png|svg|js|css|mp3|ogg|mpe?g|avi|zip|gz|bz2?|rar|eot|otf|ttf|woff|woff2)$ {
-        log_not_found off;
-        access_log off;
-        expires 30d;
-        add_header Cache-Control public;
-    }
+    # try files
+    include includes/static.conf;
 
-    location ~ (/bitrix/modules|/upload/support/not_image|/bitrix/php_interface|local/modules|local/php_interface) {
-        deny all;
-    }
-
-    location ~ /.git/ {
-        deny all;
-    }
-
-    location ~ /vendor/ {
-        deny all;
-    }
-
-    location ~ /composer {
-        deny all;
-    }
-
-    location ~ /.gitignore {
-        deny all;
-    }
-
-
-	location ~* ^/bitrix/subws/ {
-    	proxy_pass http://%SUB_HOST%:%SUB_PORT%;
-    	# http://blog.martinfjordvald.com/2013/02/websockets-in-nginx/
-    	# 12h+0.5
-    	proxy_max_temp_file_size 0;
-    	proxy_read_timeout  43800;
-    	proxy_http_version 1.1;
-    	proxy_set_header Upgrade $replace_upgrade;
-    	proxy_set_header Connection $connection_upgrade;
-	}
-
-	location ~* ^/bitrix/sub/ {
-    	rewrite ^/bitrix/sub/(.*)$ /bitrix/subws/$1 break;
-    	proxy_pass http://%SUB_HOST%:%SUB_PORT%;
-    	proxy_max_temp_file_size 0;
-    	proxy_read_timeout  43800;
-	}
-
-	location ~* ^/bitrix/rest/ {
-    	proxy_pass http://%PUB_HOST%:%PUB_PORT%;
-    	proxy_max_temp_file_size 0;
-    	proxy_read_timeout  43800;
-	}
-
-    # Settings BX_TEMPORARY_FILES_DIRECTORY
-    location ~* ^/bx_tmp_download/ {
-        internal;
-        rewrite /bx_tmp_download/(.+) /.bx_temp/default/$1 last;
-    }
-
-    location ~* ^/.bx_temp/default/ {
-        internal;
-        root /var/www/public_html;
-    }
-
-    # cache condition variable
-    set $usecache "";
-    if ($is_global_cache = 1) { set $usecache "${usecache}A"; }
-
-    # Cache location: composite and general site
-    location ~* @.*\.html$ {
-        internal;
-        # disable browser cache, php manage file
-        expires -1y;
-        add_header X-Bitrix-Composite "Nginx (file)";
-    }
-
-    # Player options, disable no-sniff
-    location ~* ^/bitrix/components/bitrix/player/mediaplayer/player$ {
-        add_header Access-Control-Allow-Origin *;
-    }
+    # push and pull
+    include includes/push.conf;
 
     # php file processing
     location ~ \.php$ {
-
-        set $cache_file "bitrix/html_pages$general_key@$args.html";
-
-        # test file conditions
-        if (-f "$docroot/bitrix/html_pages/.enabled") { set $usecache "${usecache}B"; }
-        if (-f "$docroot/$cache_file")                { set $usecache "${usecache}C"; }
-
-        # create rewrite if cache-file exists
-        if ($usecache = "ABC" ) { rewrite .* /$cache_file last; }
-
         include fastcgi_params;
         fastcgi_pass %PHPFPM%:9000;
         fastcgi_index index.php;
@@ -114,45 +30,18 @@ server {
     }
 
     # directories page processing
-    location ~ /$ {
-
-        set $cache_file "bitrix/html_pages$general_key/index@$args.html";
-
-        # test file conditions
-        if (-f "$docroot/bitrix/html_pages/.enabled") { set $usecache "${usecache}B"; }
-        if (-f "$docroot/$cache_file")                { set $usecache "${usecache}C"; }
-
-        # create rewrite if cache-file exists
-        if ($usecache = "ABC" ) { rewrite .* /$cache_file last; }
+    location / {
+        index index.php;
+        try_files       $uri $uri/ @bitrix;
     }
 
-    location ~ /upload/ {
-        client_body_buffer_size 1024m;
-        client_max_body_size 1024m;
+    location @bitrix {
+        include                 fastcgi_params;
+        fastcgi_pass            %PHPFPM%:9000;
+        fastcgi_index           index.php;
+        fastcgi_send_timeout    21600;
+        fastcgi_read_timeout    21600;
+        fastcgi_param SCRIPT_FILENAME $document_root/bitrix/urlrewrite.php;
     }
 
-    location = /favicon.png {
-        log_not_found off;
-        access_log off;
-    }
-
-    location = /robots.txt {
-        log_not_found off;
-        access_log off;
-    }
-
-	location @bitrix {
-        include 				fastcgi_params;
-        fastcgi_pass 			%PHPFPM%:9000;
-        fastcgi_index 			index.php;
-        fastcgi_send_timeout 	21600;
-        fastcgi_read_timeout 	21600;	
-    	fastcgi_param SCRIPT_FILENAME $document_root/bitrix/urlrewrite.php;
-	}
-
-    error_page 404 /404.html;
-
-    location /404.html {
-
-    }
 }

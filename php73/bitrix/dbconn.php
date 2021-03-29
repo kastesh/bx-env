@@ -1,4 +1,4 @@
-<?
+<?php
 define("DBPersistent", false);
 $DBType = "mysql";
 $DBHost = "%DBHOST%";

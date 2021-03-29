@@ -60,7 +60,7 @@ return array (
       'log' => array (
           'settings' =>
           array (
-            'file' => '/var/log/php/exceptions.log',
+            'file' => '/var/log/php-fpm/exceptions.log',
             'log_size' => 1000000,
         ),
       ),

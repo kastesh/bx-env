@@ -57,6 +57,8 @@ RUN chmod 0755 /usr/local/bin/docker-entrypoint.sh
 
 COPY ./bitrix /tmp/bitrix/
 
+USER bitrix:bitrix
+
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 CMD ["php-fpm"]

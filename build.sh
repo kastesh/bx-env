@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PHPs="php71 php72 php73 php74 php80"
+PHPs="php71 php72 php73 php74 php80 nginx"
 REPO=repodocker.office.bitrix.ru
 
 for php in $PHPs;do
