@@ -30,5 +30,3 @@ services:
         aliases:
           - mysql80
 
-networks:
-  bx:

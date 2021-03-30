@@ -10,7 +10,7 @@ Cyan='\033[0;36m'         # Cyan
 White='\033[0;37m'        # White]]]]]]]]]'
 Default="$Green"
 
-PHP_VERSIONS=('php71' 'php72' 'php73' 'php74')
+PHP_VERSIONS=('php71' 'php72' 'php73' 'php74' 'php80')
 MYSQL_VERSIONS=('mysql57' 'mysql80')
 
 log(){

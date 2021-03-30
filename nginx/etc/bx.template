@@ -2,13 +2,13 @@ server {
     listen 80%DEFAULT%;
 
     server_name %HOST%;
-    set $docroot /var/www/public_html/php74/mysql57/%NAME%;
+    set $docroot /var/www/public_html/%NAME%;
     root $docroot;
 
     client_max_body_size 1024m;
 
-    access_log /var/log/nginx/access-%NAME%.bx.log jsonlog;
-    error_log /var/log/nginx/error-%NAME%.bx.log;
+    access_log /var/log/nginx/access-%HOST%.bx.log jsonlog;
+    error_log /var/log/nginx/error-%HOST%.bx.log;
 
     # error pages
     include includes/error_page.conf;

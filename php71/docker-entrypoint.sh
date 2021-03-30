@@ -14,6 +14,7 @@ PHPVER=php$(php --version | egrep -o "PHP\s+[0-9\.]+" | \
 WWW_DIR=/var/www/public_html/$PHPVER
 DB_FILE=db.sql
 SITE_FILE=files.zip
+EMPTY_FILE=vm_kernel.tar.gz
 USER=bitrix
 GROUP=bitrix
 LOG_DIR=/var/log/php-fpm
@@ -96,6 +97,7 @@ ping_mysql(){
 create_mysql_db(){
     dump="${1}"
     myhost="${2:-mysql}"
+    is_upload="${3:-1}"
 
 	[[ ! -f $MY_CNF ]] && create_my_cnf "$MY_CNF" "$myhost"
 
@@ -130,12 +132,15 @@ create_mysql_db(){
         return 3
     fi
 
-    mysql --defaults-file=$MY_CNF $project_str < $DB_FILE
-    if [[ $? -gt 0 ]]; then
-        echo "Cannot upload database data"
-        return 4
+    if [[ $IS_UPLOAD -gt 0 ]]; then
+        mysql --defaults-file=$MY_CNF $project_str < $DB_FILE
+        if [[ $? -gt 0 ]]; then
+            echo "Cannot upload database data"
+            return 4
+        fi
+        echo "Upload data to DB $project_str"
+        rm -f $DB_FILE
     fi
-    echo "Upload data to DB $project_str"
 
     PROJECT="${project_str}"
     PASSWORD="${project_password}"
@@ -156,19 +161,38 @@ cfg_site(){
 
 
     # run DB configuration only if there files
-    [[ ! -f $DB_FILE ]] && return 1
-    [[ ! -f $SITE_FILE ]] && return 2
-    [[ -f .BITRIX_CONFIG ]] && return 3
+    if [[ ! ( -f $DB_FILE && -f $SITE_FILE ) ]]; then
+        if [[ ! -f $EMPTY_FILE ]]; then
+            echo "There are no prepared files for installation.Exit."
+            return 1
+        else
+            IS_UPLOAD=0
+        fi
+    else
+        IS_UPLOAD=1
+    fi
+    if [[ -f .BITRIX_CONFIG ]]; then
+        echo "There is .BITRIX_CONFIG in the directory $dir"
+        return 3
+    fi
 
-    create_mysql_db "$DB_FILE" "$MYSQL_VERSION"
+    create_mysql_db "$DB_FILE" "$MYSQL_VERSION" "$IS_UPLOAD"
     [[ $? -gt 0 ]] && return 1
     echo "+++ Created DB $PROJECT"
 
     # unpack SITE_FILE
 	# rm -f $SITE_FILE  && \
-    unzip -q -o $SITE_FILE && \
-        chown -R ${USER}:${GROUP} .
-    echo "+++ Unzip $SITE_FILE"
+    if [[ $IS_UPLOAD -gt 0 ]]; then
+        unzip -q -o $SITE_FILE && \
+            chown -R ${USER}:${GROUP} .
+        echo "+++ Unzip $SITE_FILE"
+        rm -f $SITE_FILE
+    else
+        tar xzvvf $EMPTY_FILE && \
+            chown -R ${USER}:${GROUP} .
+        echo "+++ Unzip $EMPTY_FILE"
+        rm -f $EMPTY_FILE
+    fi
 
     # Update settings.php
     cat /tmp/bitrix/.settings.php | \
@@ -180,6 +204,9 @@ cfg_site(){
                 s/%BX_PUSH_PUB_HOST%/$BX_PUSH_PUB_HOST/; \
                 s/%BX_PUSH_PUB_PORT%/$BX_PUSH_PUB_PORT/" > ./bitrix/.settings.php
     echo "+++ Update ./bitrix/.settings.php"
+    if [[ -f ./bitrix/.settings.php.crm ]]; then
+        rm -f ./bitrix/.settings.php.crm
+    fi
 
     # Update dbconn.php
     cat /tmp/bitrix/dbconn.php | \
@@ -189,10 +216,12 @@ cfg_site(){
                 s/%DBPASSWORD%/$PASSWORD/; \
                 s/%HOST%/$dir/;" > ./bitrix/php_interface/dbconn.php
     echo "+++ Update ./bitrix/php_interface/dbconn.php"
+    if [[ -f /tmp/bitrix/dbconn.php.crm ]]; then
+        rm -f /tmp/bitrix/dbconn.php.crm
+    fi
 
     # Create .BITRIX_CONFIG
     echo "$dir:$PROJECT:$MYSQL_VERSION:$PHPVER" > .BITRIX_CONFIG
-    rm -f $DB_FILE && rm -f $SITE_FILE
 
     # Create /var/www/public_html/.bx_temp/%HOST%
     [[ ! -d /var/www/public_html/.bx_temp/$dir ]] && \

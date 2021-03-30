@@ -6,10 +6,12 @@ PROGPATH=$(dirname $0)
 
 source $PROGPATH/common.sh || exit 255
 
+IS_EMPTY=0
+
 usage(){
     rtn=${1:-0}
 
-    echo "Usage: $PROGNAME -s site_name -p php_version -m mysql_version -a archive_name"
+    echo "Usage: $PROGNAME -s site_name -p php_version -m mysql_version [-a archive_name]|[-e]"
     echo "Options:"
     echo "-h  - show this help message"
     echo "-v  - enable verbose mode"
@@ -17,27 +19,29 @@ usage(){
     echo "-p  - php version (default: php72)"
     echo "-m  - mysql version (default: mysql57)"
     echo "-a  - archive name (example: 20.200.300/b24)"
+    echo "-e  - create empty site with bitrixsetup.php"
     echo "-c  - config file (default: $PROGPATH/CONFIG)"
 
     exit $rtn
 }
 
-run_site(){
+copy_archive_files(){
     IS_HTTP=$(echo "$DISTR_URL" | grep -c '^http')
 
     # copy files
     DB="$DISTR_URL/${ARCHIVE}.sql"
     ARCH="$DISTR_URL/${ARCHIVE}.zip"
 
-    SITE_DIR="$HTML_PATH/$PHPV/$MYV/$SITE"
     if [[ ! -d $SITE_DIR ]]; then
         mkdir -p $SITE_DIR
         pushd $SITE_DIR >/dev/null 2>&1
         if [[ $IS_HTTP -gt 0 ]]; then
             log "Download DB=${ARCHIVE}.sql"
-            curl -s "$DB" --output db.sql
+            curl -s "$DB" --output db.sql || \
+                return 1
             log "Download Files=${ARCHIVE}.zip"
-            curl -s "$ARCH" --output files.zip
+            curl -s "$ARCH" --output files.zip || \
+                return 2
         else 
 
             log "Copy DB=${ARCHIVE}.sql"
@@ -50,6 +54,40 @@ run_site(){
         popd >/dev/null 2>&1
     fi
 
+
+}
+
+copy_bitrixsetup(){
+    EMPTY_ARCH="https://repos.1c-bitrix.ru/vm/vm_kernel.tar.gz"
+
+    if [[ ! -d $SITE_DIR ]]; then
+        mkdir -p $SITE_DIR
+        pushd $SITE_DIR >/dev/null 2>&1
+        log "Download Files=$EMPTY_ARCH"
+        curl -s "$EMPTY_ARCH" \
+            --output vm_kernel.tar.gz || return 1
+
+        log "Upload files to $SITE_DIR"
+        popd >/dev/null 2>&1
+    fi
+
+
+
+}
+
+run_site(){
+    SITE_DIR="$HTML_PATH/$PHPV/$MYV/$SITE"
+
+    if [[ -f $SITE_DIR/.BITRIX_CONFIG ]]; then
+        log "The site istallation already exists in $SITE_DIR"
+        return 1
+    fi
+
+    if [[ $IS_EMPTY == 0 ]]; then
+        copy_archive_files || return 1
+    else
+        copy_bitrixsetup || return 1
+    fi
     # run docker-composer with defind configs
     BASE_C=docker-compose.yml
     NGINX_C=docker-compose-nginx.yml
@@ -82,16 +120,23 @@ run_site(){
 
     pushd $PROJECT_DIR
     # if php and nginx not running we start them
+    echo docker-compose -f $NET_C \
+        -f $BASE_C \
+        -f $MYSQL_C \
+        -f $PUSH_C \
+        -f $NGINX_C \
+        -f $PHP_C up -d
     docker-compose -f $NET_C \
         -f $BASE_C \
         -f $MYSQL_C \
         -f $PUSH_C \
         -f $NGINX_C \
         -f $PHP_C up -d
+
     popd
 }
 # getopts
-while getopts ":s:p:m:a:c:vh" opt; do
+while getopts ":s:p:m:a:c:vhe" opt; do
     case $opt in
         "h") usage 0;;
         "v") VERBOSE=1;;
@@ -100,13 +145,14 @@ while getopts ":s:p:m:a:c:vh" opt; do
         "m") MYV=$OPTARG;;
         "a") ARCHIVE=$OPTARG;;
         "c") CONFIG=$OPTARG;;
+        "e") IS_EMPTY=1;;
         \?) echo "ERROR: Incorrect option -$opt"
             usage 1 ;;
     esac
 done
 # mandatory options
-[[ -z $ARCHIVE ]] && \
-    error "You need defined ARCHIVE name for site"
+[[ -z $ARCHIVE && ( $IS_EMPTY -eq 0 ) ]] && \
+    error "You must specify the path to the ARCHIVE to create or define the creation of an empty site."
 [[ -z $SITE ]] && \
     error "Sitename is mandatory option"
 

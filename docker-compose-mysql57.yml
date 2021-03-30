@@ -32,5 +32,3 @@ services:
           - mysql57
           - mysql
 
-networks:
-  bx:
