@@ -8,7 +8,7 @@ WWW_DIR=/var/www/public_html
 
 TEMPLATE="${BX_WORKDIR}/${BX_TEMPLATE}"
 
-PHP_VERS=(php71 php72 php73 php74)
+PHP_VERS=(php71 php72 php73 php74 php80)
 MYSQL_VERS=(mysql57 mysql80)
 
 

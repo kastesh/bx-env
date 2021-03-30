@@ -12,11 +12,11 @@ volumes:
     driver_opts:
       o: bind
       type: none
-      device: ${BX_LOGS_PATH}/bx-php80
+      device: ${BX_LOGS_PATH}/php80
 
 services:
   php80:
-    image: repodocker.office.bitrix.ru/php80
+    image: repodocker.office.bitrix.ru/bx-php80
     container_name: bx-php80
     restart: always
     env_file: .env

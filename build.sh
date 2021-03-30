@@ -2,6 +2,7 @@
 set -e
 
 PHPs="php71 php72 php73 php74 php80 nginx"
+PHPs="nginx"
 REPO=repodocker.office.bitrix.ru
 
 for php in $PHPs;do
