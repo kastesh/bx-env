@@ -67,10 +67,10 @@ create_configs(){
     if [[ -z $MODULES_PATH ]]; then
         log "Set modules path to default"
         MODULES_PATH=$MODULES_PATH_DEFAULT
-        [[ ! -d $MODULES_PATH ]] && \
-            mkdir -p $MODULES_PATH && \
-            chown -R $PROJECT_USER $MODULES_PATH
     fi
+    [[ ! -d $MODULES_PATH ]] && \
+        mkdir -p $MODULES_PATH && \
+        chown -R $PROJECT_USER $MODULES_PATH
 
     # mysql57
     #read -p \
