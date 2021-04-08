@@ -21,7 +21,7 @@ services:
     restart: always
     env_file: .env
     ports:
-      - 3306:3308
+      - 3308:3306
     volumes:
       - bx-logs/mysql80:/var/log/mysql
       - bx-mysql80:/var/lib/mysql
