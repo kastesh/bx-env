@@ -198,7 +198,7 @@ cfg_site(){
                 s/%DBNAME%/$PROJECT/; \
                 s/%DBLOGIN%/$PROJECT/; \
                 s/%DBPASSWORD%/$PASSWORD/; \
-                s/%SECURITY_KEY%/$SECURITY_KEY/; \
+                s/%SECURITY_KEY%/$BX_PUSH_SECURITY_KEY/; \
                 s/%BX_PUSH_PUB_HOST%/$BX_PUSH_PUB_HOST/; \
                 s/%BX_PUSH_PUB_PORT%/$BX_PUSH_PUB_PORT/" > ./bitrix/.settings.php
     echo "+++ Update ./bitrix/.settings.php"
