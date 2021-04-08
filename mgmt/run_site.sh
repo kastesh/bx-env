@@ -70,9 +70,6 @@ copy_bitrixsetup(){
         log "Upload files to $SITE_DIR"
         popd >/dev/null 2>&1
     fi
-
-
-
 }
 
 run_site(){

@@ -148,13 +148,11 @@ create_mysql_db(){
     return 0
 }
 
+
 cfg_site(){
-    dir="$1"
+    local dir="${1}"
 
     [[ -z $dir ]] && return 1
-
-
-    pushd $dir 1>/dev/null 2>&1 || exit
 
     MYSQL_VERSION=$(echo $(pwd) | \
         awk -F'/' '{print $(NF-1)}')
@@ -188,7 +186,7 @@ cfg_site(){
         echo "+++ Unzip $SITE_FILE"
         rm -f $SITE_FILE
     else
-        tar xzvvf $EMPTY_FILE && \
+        tar xzf $EMPTY_FILE && \
             chown -R ${USER}:${GROUP} .
         echo "+++ Unzip $EMPTY_FILE"
         rm -f $EMPTY_FILE
@@ -233,43 +231,66 @@ cfg_site(){
         mkdir $LOG_DIR -p && \
         touch $EXC_LOG  && \
         chown -R ${USER}:${GROUP} $LOG_DIR
-
-    popd 1>/dev/null 2>&1
+    
+    return 0
 }
 
 cfg_sites(){
 
+    # BEGIN phpVERSION dir
     pushd $WWW_DIR 1>/dev/null 2>&1 || exit
     echo "Processing $WWW_DIR"
 
-    for fm in *; do
-        [[ ! ( -d ${fm} ) ]] && continue
-        [[ ${fm} =~ ".bx_temp" ]] && continue
+    mysql_dirs=$(find -maxdepth 1 -name "mysql*" -type d)
+    IFS_BAk=$IFS
+    IFS=$'\n'
+    for fm in $mysql_dirs; do
+        fm=$(basename $fm)
+        echo "= MySQL: $fm"
 
-        if [[ $(printf "%s\n" "${MYSQL_VERS[@]}" | \
-            grep -cP "^$fm$") -gt 0   ]]; then
-            
-            # mysql 80
-            pushd $fm || exit
-            for f in *; do
-                [[ ! ( -d ${f} ) ]] && continue
-
-                echo "+ $f"
-                cfg_site "${f}"
-                echo "  return $?"
-            done
-
-            popd 
+        if_supported_ver=$(printf "%s\n" "${MYSQL_VERS[@]}" | \
+            grep -cP "^$fm$") 
+        if [[ $if_supported_ver -eq 0 ]]; then
+            echo "= Not supported. Skip."
+            continue
         fi
+
+        # BEGIN mysqlVERSION dir
+        pushd $fm || exit
+        echo "= Processing $fm"
+        site_dirs=$(find -maxdepth 1 -type d ! -name ".")
+
+        if [[ -z $site_dirs ]]; then
+            echo "= There are no site's directories. Skip."
+            continue
+        fi
+
+        for f in $site_dirs; do
+            f=$(basename $f)
+            echo "== Site Directory: $f"
+
+            # BEGIN site
+            pushd ${f}
+            
+            cfg_site "${f}"
+            echo "== return $?"
+            
+            # END site
+            popd
+        done
+
+        # END mysqlVERSION dir
+        popd 
     done
+    IFS=$IFS_BAK
+
+    # END phpVERSION dir
     popd 1>/dev/null 2>&1 
 }
 
 
 [[ $BX_HOST_AUTOCREATE == 1 ]] && cfg_sites
  
-set -e
-
 [[ $DEBUG == true ]] && set -x
 
 # allow arguments to be passed to nginx

@@ -1,8 +1,12 @@
 #!/bin/bash
 set -e
 
-PHPs="php71 php72 php73 php74 php80 nginx"
-PHPs="nginx"
+PHPs="${1}"
+PHPs_default="php71 php72 php73 php74 php80 nginx"
+if [[ -z $PHPs ]]; then
+    PHPs="${PHPs_default}"
+fi
+
 REPO=repodocker.office.bitrix.ru
 
 for php in $PHPs;do
