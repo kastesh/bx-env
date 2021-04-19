@@ -238,6 +238,7 @@ cfg_site(){
 cfg_sites(){
 
     # BEGIN phpVERSION dir
+    echo "pushd $WWW_DIR"
     pushd $WWW_DIR 1>/dev/null 2>&1 || exit
     echo "Processing $WWW_DIR"
 
@@ -256,12 +257,15 @@ cfg_sites(){
         fi
 
         # BEGIN mysqlVERSION dir
-        pushd $fm || exit
+        echo ">> pushd $fm"
+        pushd $fm >/dev/null 2>&1|| exit
         echo "= Processing $fm"
         site_dirs=$(find -maxdepth 1 -type d ! -name ".")
 
         if [[ -z $site_dirs ]]; then
             echo "= There are no site's directories. Skip."
+            echo echo "<<<<< exit ${f}"
+            popd >/dev/null 2>&1
             continue
         fi
 
@@ -270,22 +274,26 @@ cfg_sites(){
             echo "== Site Directory: $f"
 
             # BEGIN site
-            pushd ${f}
+            echo ">>>>> ${f}"
+            pushd ${f} >/dev/null 2>&1 || exit
             
             cfg_site "${f}"
             echo "== return $?"
             
             # END site
-            popd
+            echo "<<<<< exit ${f}"
+            popd >/dev/null 2>&1
         done
 
         # END mysqlVERSION dir
-        popd 
+        echo "<< exit ${fm}"
+        popd >/dev/null 2>&1
     done
     IFS=$IFS_BAK
 
     # END phpVERSION dir
-    popd 1>/dev/null 2>&1 
+    echo "exit $WWW_DIR"
+    popd >/dev/null 2>&1
 }
 
 
