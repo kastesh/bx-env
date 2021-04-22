@@ -12,7 +12,10 @@ source $PROGPATH/common.sh || exit 255
 usage(){
     rtn=${1:-0}
 
-    echo "Usage: $PROGNAME [-vhblC] [-c /path/to/config]"
+    echo "Usage: $PROGNAME [-vhqblC] [-c /path/to/config] \\"
+    echo "       [-D /path/to/distrs] [-S /path/to/site] \\"
+    echo "       [-M /path/to/modules] [-m /path/to/mysql] \\"
+    echo "       [-d domainname] [-s sitename]"
     echo "Options:"
     echo "-h  - show this help message"
     echo "-v  - enable verbose mode"
@@ -20,7 +23,14 @@ usage(){
     echo "-b  - build docker images (default: disable)"
     echo "-l  - local installation; created html folders"
     echo "-C  - disable configuration creation"
-
+    echo "-q  - quite mode; set optons to default values"
+    echo "-D  - path to directory with distribution archives"
+    echo "-S  - directory where sites files lives"
+    echo "-M  - directory where modules files lives"
+    echo "-m  - directory where mysql files lives"
+    echo "-L  - directory where log files lives"
+    echo "-d  - default domain name"
+    echo "-s  - default site name"
     exit $rtn
 }
 
@@ -28,59 +38,92 @@ create_configs(){
     PROJECT_USER_DEFAULT=$(stat -c "%U" $(tty))
     PROJECT_UID=$(id -u $PROJECT_USER_DEFAULT)
     PROJECT_GID=$(id -g $PROJECT_USER_DEFAULT)
-    read -p \
-        "The runtime user ($PROJECT_USER_DEFAULT): " \
-        PROJECT_USER
-    if [[ -z $PROJECT_USER ]]; then
-        PROJECT_USER=$PROJECT_USER_DEFAULT
+    # ask user when quite mode iis disabled
+    if [[ $IS_QUITE -eq 0 ]]; then
+        read -p \
+            "The runtime user ($PROJECT_USER_DEFAULT): " \
+            PROJECT_USER
     fi
+    [[ -z $PROJECT_USER ]] && PROJECT_USER=$PROJECT_USER_DEFAULT
 
 
     # список подготовленных дистрибутивов
     DISTR_URL_DEFAULT=$(echo $HOME)/distrs
-    read -p \
-        "URL or PATH to the prepared distribution directory ($DISTR_URL_DEFAULT): " \
-        DISTR_URL
+    [[ -n $DISTR_DIRECTORY ]] && DISTR_URL_DEFAULT="${DISTR_DIRECTORY}"
+    
+    # quite mode is disabled
+    # there is no option -D in cmd line
+    if [[ $IS_QUITE -eq 0 && -z $DISTR_DIRECTORY ]]; then
+        read -p \
+            "URL or PATH to the prepared distribution directory ($DISTR_URL_DEFAULT): " \
+            DISTR_URL
+    fi
+    
     if [[ -z $DISTR_URL ]]; then
-        log "Set distrs url to default."
+        log "Set distrs url/directory to $DISTR_URL_DEFAULT."
         DISTR_URL=$DISTR_URL_DEFAULT
-        [[ ! -d $DISTR_URL ]] && mkdir -p $DISTR_URL
+    fi
+
+    # DISTR_URL is directory and it doesn't exist in the system
+    if [[ $(echo "$DISTR_URL" | grep -c "^http") -eq 0 && \
+        ! ( -d $DISTR_URL ) ]]; then
+        mkdir -p $DISTR_URL
+        log "Create distrs directory $DISTR_URL"
         chown -R $PROJECT_USER $DISTR_URL
     fi
 
     # каталог сайтов
     HTML_PATH_DEFAULT=$(echo $HOME)/sites
-    read -p \
-        "The path on the Docker server where the site directories will be located ($HTML_PATH_DEFAULT): " \
-        HTML_PATH
- 
+    [[ -n $SITE_DIRECTORY ]] && HTML_PATH_DEFAULT=$SITE_DIRECTORY
+
+    if [[ $IS_QUITE -eq 0 && -z $SITE_DIRECTORY ]]; then
+        read -p \
+            "The path on server where the site directories will be located ($HTML_PATH_DEFAULT): " \
+            HTML_PATH
+    fi
+
     if [[ -z $HTML_PATH ]]; then
-        log "Set sites path to default."
+        log "Set sites path to $HTML_PATH_DEFAULT."
         HTML_PATH=$HTML_PATH_DEFAULT
-        [[ ! -d $HTML_PATH ]] && mkdir -p $HTML_PATH
+    fi
+    if [[ ! -d $HTML_PATH ]]; then
+        mkdir -p $HTML_PATH
+        log "Create site directory $HTML_PATH"
         chown -R $PROJECT_USER $HTML_PATH
     fi
 
+
     # каталог модулей
     MODULES_PATH_DEFAULT=$(echo $HOME)/modules
-    read -p \
-        "The path on the Docker server where the modules will be located ($MODULES_PATH_DEFAULT): " \
-        MODULES_PATH
+    [[ -n $MODULES_DIRECTORY ]] && MODULES_PATH_DEFAULT="${MODULES_DIRECTORY}"
+
+    if [[ $IS_QUITE -eq 0 && -z $MODULES_DIRECTORY ]]; then
+        read -p \
+            "The path on the server where the modules will be located ($MODULES_PATH_DEFAULT): " \
+            MODULES_PATH
+    fi
+
     if [[ -z $MODULES_PATH ]]; then
-        log "Set modules path to default"
+        log "Set modules path to $MODULES_PATH_DEFAULT"
         MODULES_PATH=$MODULES_PATH_DEFAULT
     fi
-    [[ ! -d $MODULES_PATH ]] && \
-        mkdir -p $MODULES_PATH && \
+
+    if [[ ! -d $MODULES_PATH ]]; then
+        mkdir -p $MODULES_PATH 
         chown -R $PROJECT_USER $MODULES_PATH
+    fi
 
     # mysql directory
     MYSQL_PATH_DEFAULT=$(echo $HOME)/mysql
-    read -p \
-        "The path to mysql path: " \
-        MYSQL_PATH
+    [[ -n $MYSQL_DIRECTORY ]] && MYSQL_PATH_DEFAULT=$MYSQL_DIRECTORY
+    if [[ $IS_QUITE -eq 0 && -z $MYSQL_DIRECTORY ]]; then
+        read -p \
+            "The path to mysql path ($MYSQL_PATH_DEFAULT): " \
+            MYSQL_PATH
+    fi
+
     if [[ -z $MYSQL_PATH ]]; then
-        log "MySQL path set to default value: $MYSQL_PATH_DEFAULT"
+        log "MySQL path set to $MYSQL_PATH_DEFAULT"
         MYSQL_PATH=$MYSQL_PATH_DEFAULT
     fi
     [[ ! -d $MYSQL_PATH ]] && mkdir -p $MYSQL_PATH
@@ -89,40 +132,65 @@ create_configs(){
 
     # каталог со всем проектом  bx-env
     PROJECT_DIR_DEFAULT=$(dirname $PROGPATH)
-    read -p \
-        "The directory where the bx-env project is located ($PROJECT_DIR_DEFAULT): " \
-        PROJECT_DIR
+    if [[ $IS_QUITE -eq 0 ]]; then
+        read -p \
+            "The directory where the bx-env project is located ($PROJECT_DIR_DEFAULT): " \
+            PROJECT_DIR
+    fi
     if [[ -z $PROJECT_DIR ]]; then
         PROJECT_DIR=$PROJECT_DIR_DEFAULT
+        log "Project directory is $PROJECT_DIR"
     fi
 
     # каталог логов
     LOG_DIR_DEFAULT=$(echo $HOME)/logs
-    read -p \
-        "Log directory ($LOG_DIR_DEFAULT): " \
-        LOG_DIR
+    [[ -n $LOGS_DIRECTORY ]] && LOG_DIR_DEFAULT="$LOGS_DIRECTORY"
+    if [[ $IS_QUITE -eq 0 && -z $LOGS_DIRECTORY ]]; then
+        read -p \
+            "Log directory ($LOG_DIR_DEFAULT): " \
+            LOG_DIR
+    fi
     if [[ -z $LOG_DIR ]]; then
         log "Set log path to default."
         LOG_DIR=$LOG_DIR_DEFAULT
     fi
 
-    [[ ! -d $LOG_DIR ]] && mkdir -p $LOG_DIR
-    pushd $LOG_DIR 1>/dev/null 2>&1
-    mkdir -p php7{1,2,3,4} php80 mysql{57,80} nginx push/{sub,pub} 2>/dev/null
-    popd 1>/dev/null 2>&1
-    chown $PROJECT_USER $LOG_DIR -R
+    if [[ ! -d $LOG_DIR ]]; then
+        mkdir -p $LOG_DIR
+        log "Create log directory $LOG_DIR"
+        pushd $LOG_DIR 1>/dev/null 2>&1
+        mkdir -p php7{1,2,3,4} php80 mysql{57,80} nginx push/{sub,pub} 2>/dev/null
+        popd 1>/dev/null 2>&1
+        chown $PROJECT_USER $LOG_DIR -R
+    fi
 
-    read -p \
-        "Enter default domain name for sites(example ksh.bx): " \
-        DEFAULT_DOMAIN
-    [[ -z $DEFAULT_DOMAIN ]] && \
-        error "Default domain name cannot be emty"
+    if [[ $IS_QUITE -eq 0 && -z $DOMAIN_NAME ]]; then
+        read -p \
+            "Enter default domain name for sites(example ksh.bx): " \
+            DEFAULT_DOMAIN
+    fi
 
-    read -p \
-        "Enter default sitename: (default $DEFAULT_DOMAIN): " \
-        DEFAULT_SITENAME
-    [[ -z $DEFAULT_SITENAME ]] && \
-        DEFAULT_SITENAME=$DEFAULT_DOMAIN
+    if [[ -z $DEFAULT_DOMAIN ]]; then
+        if [[ -z $DOMAIN_NAME ]]; then
+            error "Default domain name cannot be emty"
+        else
+            DEFAULT_DOMAIN=$DOMAIN_NAME
+        fi
+    fi
+
+    if [[ $IS_QUITE  -eq 0 && -z $SITE_NAME ]]; then
+        read -p \
+            "Enter default sitename: (default $DEFAULT_DOMAIN): " \
+            DEFAULT_SITENAME
+    fi
+
+    if [[ -z $DEFAULT_SITENAME ]]; then
+        if [[ -n $SITE_NAME ]]; then
+            DEFAULT_SITENAME=$SITE_NAME
+        else
+            DEFAULT_SITENAME=$DEFAULT_DOMAIN
+        fi
+    fi
 
     PUSH_KEY=$(create_random_key)
     MYSQL_PASSWORD=$(create_random_password)
@@ -138,7 +206,9 @@ create_configs(){
     log "UID=\"$PROJECT_UID\""
     log "GID=\"$PROJECT_GID\""
 
-    read -p "Please confirm to save the selected options (N|y): " user_answer
+    if [[ $IS_QUITE -eq 0 ]]; then
+        read -p "Please confirm to save the selected options (N|y): " user_answer
+    fi
 
     if [[ $(echo "$user_answer" | grep -cwi "y") -gt 0 ]]; then
         # сохраняем конфиг для скриптов
@@ -221,7 +291,7 @@ build_images(){
 }
 
 # getopts
-while getopts ":c:blvhC" opt; do
+while getopts ":D:S:M:m:L:d:s:c:qblvhC" opt; do
     case $opt in
         "h") usage 0;;
         "v") VERBOSE=1;;
@@ -229,6 +299,14 @@ while getopts ":c:blvhC" opt; do
         "l") IS_LOCAL=1;;
 		"b") IS_BUILD=1;;
         "C") IS_CONFIG=0 ;;
+        "q") IS_QUITE=1 ;;
+        "D") DISTR_DIRECTORY=$OPTARG;;
+        "S") SITE_DIRECTORY=$OPTARG;;
+        "M") MODULES_DIRECTORY=$OPTARG;;
+        "m") MYSQL_DIRECTORY=$OPTARG;;
+        "L") LOGS_DIRECTORY=$OPTARG;;
+        "d") DOMAIN_NAME=$OPTARG;;
+        "s") SITE_NAME=$OPTARG;;
         \?) echo "ERROR: Incorrect option -$opt"
             usage 1 ;;
     esac
@@ -240,6 +318,7 @@ done
 [[ -z $IS_LOCAL ]]  && IS_LOCAL=0
 [[ -z $IS_BUILD ]]  && IS_BUILD=0
 [[ -z $IS_CONFIG ]] && IS_CONFIG=1
+[[ -z $IS_QUITE ]]  && IS_QUITE=0
 
 [[ -n $LOG_DIR ]]   && LOG=$LOG_DIR/configure.log
 
