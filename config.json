@@ -1,29 +1,29 @@
 {
     "servers": [
         {
-            "name": "${MODE}-${LISTEN_PORT}",
-            "port": ${LISTEN_PORT},
+            "name": "sub-8080",
+            "port": 8080,
             "hostname": "0.0.0.0",
             "backlog": 1024,
             "routes": {
-                "sub": "${SUB_URI}"
+                "sub": "/bitrix/subws/"
             }
         }
     ],
-    "dataDir": "${WORKDIR}/data",
+    "dataDir": "/opt/push-server/data",
     "clusterMode": true,
-    "processUniqueId": "${MODE}-${LISTEN_PORT}",
+    "processUniqueId": "sub-8080",
     "storage": {
         "type": "redis",
         "messageTLL": 86400,
         "channelTLL": 86400,
         "onlineTLL": 120,
         "onlineDelta": 10,
-        "host": "${REDIS_HOST}",
-        "port": ${REDIS_PORT}
+        "host": "redis",
+        "port": 6379
     },
     "security": {
-        "key": "${SECURITY_KEY}"
+        "key": "9089716AF5812E68AF293762C5B95FEA"
     },
     "debug": {
         "folderName": "/var/log/push-server",

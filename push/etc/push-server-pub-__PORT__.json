@@ -3,7 +3,7 @@
         {
             "name": "${MODE}-${LISTEN_PORT}",
             "port": ${LISTEN_PORT},
-            "hostname": "{LISTEN_HOSTNAME}",
+            "hostname": "0.0.0.0",
             "backlog": 1024,
             "routes": {
                 "pub": "${PUB_URI}",

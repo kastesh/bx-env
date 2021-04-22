@@ -7,12 +7,19 @@
 version: '3'
 
 volumes:
-  bx-logs-push:
+  bx-logs-push-pub:
     driver: local
     driver_opts:
       o: bind
       type: none
-      device: ${BX_LOGS_PATH}/push
+      device: ${BX_LOGS_PATH}/push/pub
+  bx-logs-push-sub:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ${BX_LOGS_PATH}/push/sub
+
 
 services:
 
@@ -30,14 +37,16 @@ services:
     container_name: bx-push-sub
     restart: always
     env_file: .env
-    ports:
-      - ${BX_PUSH_SUB_PORT}:${BX_PUSH_SUB_PORT}
+    environment:
+      - MODE=sub
+      - LISTEN_PORT=${BX_PUSH_SUB_PORT}
+      - SECURITY_KEY=${BX_PUSH_SECURITY_KEY}
     labels:
       - traefik.port=${BX_PUSH_SUB_PORT}
       - traefik.protocol=http
       - traefik.frontend.rule=Host:${BX_PUSH_SUB_HOST}
     volumes:
-      - bx-logs-push:/var/log/push-server
+      - bx-logs-push-sub:/var/log/push-server
     networks:
       bx:
         aliases:
@@ -48,8 +57,12 @@ services:
     container_name: bx-push-pub
     restart: always
     env_file: .env
+    environment:
+      - MODE=pub
+      - LISTEN_PORT=${BX_PUSH_PUB_PORT}
+      - SECURITY_KEY=${BX_PUSH_SECURITY_KEY}
     volumes:
-      - bx-logs-push:/var/log/push-server
+      - bx-logs-push-pub:/var/log/push-server
     networks:
       bx:
         aliases:

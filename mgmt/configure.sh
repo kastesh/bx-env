@@ -26,6 +26,8 @@ usage(){
 
 create_configs(){
     PROJECT_USER_DEFAULT=$(stat -c "%U" $(tty))
+    PROJECT_UID=$(id -u $PROJECT_USER_DEFAULT)
+    PROJECT_GID=$(id -g $PROJECT_USER_DEFAULT)
     read -p \
         "The runtime user ($PROJECT_USER_DEFAULT): " \
         PROJECT_USER
@@ -72,18 +74,18 @@ create_configs(){
         mkdir -p $MODULES_PATH && \
         chown -R $PROJECT_USER $MODULES_PATH
 
-    # mysql57
-    #read -p \
-    #    "The path to mysql path: " \
-    #    MYSQL_PATH
-    #if [[ -z $MYSQL_PATH ]]; then
-    #    log "MySQL path set to default value: $PROJECT_DIR/var/mysql"
-    #    MYSQL_PATH=$PROJECT_DIR/var/mysql
-    #fi
-    #[[ ! -d $MYSQL_PATH ]] && mkdir -p $MYSQL_PATH
-    #[[ ! -d $MYSQL_PATH/mysql57 ]] && mkdir -p $MYSQL_PATH/mysql57
-    #[[ ! -d $MYSQL_PATH/mysql80 ]] && mkdir -p $MYSQL_PATH/mysql80
- 
+    # mysql directory
+    MYSQL_PATH_DEFAULT=$(echo $HOME)/mysql
+    read -p \
+        "The path to mysql path: " \
+        MYSQL_PATH
+    if [[ -z $MYSQL_PATH ]]; then
+        log "MySQL path set to default value: $MYSQL_PATH_DEFAULT"
+        MYSQL_PATH=$MYSQL_PATH_DEFAULT
+    fi
+    [[ ! -d $MYSQL_PATH ]] && mkdir -p $MYSQL_PATH
+    [[ ! -d $MYSQL_PATH/mysql57 ]] && mkdir -p $MYSQL_PATH/mysql57
+    [[ ! -d $MYSQL_PATH/mysql80 ]] && mkdir -p $MYSQL_PATH/mysql80
 
     # каталог со всем проектом  bx-env
     PROJECT_DIR_DEFAULT=$(dirname $PROGPATH)
@@ -106,7 +108,7 @@ create_configs(){
 
     [[ ! -d $LOG_DIR ]] && mkdir -p $LOG_DIR
     pushd $LOG_DIR 1>/dev/null 2>&1
-    mkdir php7{1,2,3,4} php80 mysql{57,80} nginx push 2>/dev/null
+    mkdir -p php7{1,2,3,4} php80 mysql{57,80} nginx push/{sub,pub} 2>/dev/null
     popd 1>/dev/null 2>&1
     chown $PROJECT_USER $LOG_DIR -R
 
@@ -133,6 +135,8 @@ create_configs(){
     log "DEFAULT_SITENAME=\"$DEFAULT_SITENAME\""
     log "PUSH_KEY=\"$PUSH_KEY\""
     log "USER=\"$PROJECT_USER\""
+    log "UID=\"$PROJECT_UID\""
+    log "GID=\"$PROJECT_GID\""
 
     read -p "Please confirm to save the selected options (N|y): " user_answer
 
@@ -158,6 +162,9 @@ create_configs(){
                 s:%BX_PUSH_PUB_HOST%:pub.$DEFAULT_DOMAIN:; \
                 s:%BX_PUSH_SECURITY_KEY%:$PUSH_KEY:; \
                 s:%BX_DEFAULT_HOST%:$DEFAULT_SITENAME:; \
+                s:%UID%:$PROJECT_UID:; \
+                s:%GID%:$PROJECT_GID:; \
+                s:%MYSQL_PATH%:$MYSQL_PATH:; \
                 s:%BX_DEFAULT_LOCAL_DOMAIN%:$DEFAULT_DOMAIN:" > $ENV_CONF
         [[ -n $MODULES_PATH ]] && \
             echo "BX_MODULES_PATH=$MODULES_PATH" >> $ENV_CONF
@@ -231,10 +238,10 @@ done
 [[ -z $VERBOSE ]]   && VERBOSE=0
 [[ -z $CONFIG ]]    && CONFIG=$PROGPATH/CONFIG
 [[ -z $IS_LOCAL ]]  && IS_LOCAL=0
-[[ -z $IS_BUILD ]] && IS_BUILD=0
+[[ -z $IS_BUILD ]]  && IS_BUILD=0
 [[ -z $IS_CONFIG ]] && IS_CONFIG=1
 
-[[ -n $LOG_DIR ]] && LOG=$LOG_DIR/configure.log
+[[ -n $LOG_DIR ]]   && LOG=$LOG_DIR/configure.log
 
 log "Start configuration of Docker Env"
 

@@ -13,6 +13,12 @@ volumes:
       type: none
       device: ${BX_LOGS_PATH}/mysql80
   bx-mysql80:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ${MYSQL_PATH}/mysql80
+
 
 services:
   mysql80:

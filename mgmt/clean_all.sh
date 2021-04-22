@@ -79,7 +79,7 @@ clean_folders(){
 
     pushd $LOG_DIR
     rm -rf php7{1,2,3,4} php80 mysql{57,80} nginx push
-    mkdir php7{1,2,3,4} php80 mysql{57,80} nginx push
+    mkdir -p php7{1,2,3,4} php80 mysql{57,80} nginx push/{sub,pub}
     popd
 
 

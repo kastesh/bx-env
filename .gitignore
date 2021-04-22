@@ -3,3 +3,4 @@
 /.logs
 /mgmt/.logs
 /mgmt/CONFIG
+/test/

@@ -2,3 +2,8 @@
 sql_mode = ''
 innodb_strict_mode = OFF
 default-authentication-plugin=mysql_native_password
+#log-error                       = /var/log/mysql/error.log
+#slow-query-log-file             = /var/log/mysql/slow.log
+#slow-query-log                  = 1
+#log_slow_admin_statements       = ON
+#log-slow-slave-statements

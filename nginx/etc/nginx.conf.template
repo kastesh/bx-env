@@ -1,7 +1,6 @@
-user ${CONTAINER_USER};
 worker_processes  1;
 
-pid /var/run/nginx.pid;
+pid /var/run/nginx/nginx.pid;
 
 events {
     worker_connections  2048;

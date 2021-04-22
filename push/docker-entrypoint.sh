@@ -69,4 +69,7 @@ log "Create $CONFIG"
 envsubst <$TEMPLATE >$CONFIG
 
 log "Start server"
+#while true; do
+#    sleep 30
+#done
 node server.js --config $CONFIG

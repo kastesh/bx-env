@@ -14,7 +14,15 @@ RUN npm install --production
 
 FROM node:10-alpine
 
-VOLUME /var/log/push-server
+ARG MODE=pub
+ARG SECURITY_KEY=ChangeThisKey
+ARG REDIS_HOST=redis
+ARG REDIS_PORT=6379
+ARG LISTEN_PORT=9010
+ARG CONTAINER_GID=1000
+ARG CONTAINER_UID=1000
+ARG CONTAINER_USER=node
+ARG CONTAINER_GROUP=node
 
 WORKDIR /opt/push-server
 
@@ -25,17 +33,21 @@ RUN mkdir -p /usr/local/bin &&  \
 
 COPY --from=bitrixenv /opt/push-server /opt/push-server
 
+RUN chown -R ${CONTAINER_UID}:${CONTAINER_GID} /opt/push-server && \
+    [[ ! -d /tmp/push-server ]] && mkdir /tmp/push-server && \
+    chown -R ${CONTAINER_UID}:${CONTAINER_GID} /tmp/push-server && \
+    [[ ! -d /etc/push-server ]] && mkdir /etc/push-server
+
 COPY docker-entrypoint.sh /usr/local/bin/
 COPY etc/push-server-pub-__PORT__.json /etc/push-server/push-server-pub-__PORT__.json
 COPY etc/push-server-sub-__PORT__.json /etc/push-server/push-server-sub-__PORT__.json
 
-ENV MODE pub
-ENV SECURITY_KEY ChangeThisKey
-ENV REDIS_HOST redis
-ENV REDIS_PORT 6379
-ENV LISTEN_PORT 9010
-ENV LISTEN_HOSTNAME 0.0.0.0
+RUN chown -R ${CONTAINER_UID}:${CONTAINER_GID} /etc/push-server
 
 RUN chmod 0755 /usr/local/bin/docker-entrypoint.sh
+
+VOLUME /var/log/push-server
+
+USER ${CONTAINER_USER}
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
