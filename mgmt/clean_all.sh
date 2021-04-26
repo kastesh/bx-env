@@ -20,8 +20,24 @@ usage(){
     exit $rtn
 }
 
+redis_volume(){
+    data_volume=$(docker inspect bx-redis 2>&1  | \
+        grep Source -B1 | awk -F'"' '/Name/{print $4}')
+
+    if [[ -n $data_volume ]]; then
+        echo -n $data_volume
+    else
+        echo -n ""
+    fi
+    return 0
+
+}
+
 down_containers(){
     DOWN_LIST=
+
+    REDIS_VOLUME=$(redis_volume)
+    echo "REDIS_VOLUME=$REDIS_VOLUME"
 
     pushd $PROJECT_DIR
     # php list
@@ -60,8 +76,10 @@ down_containers(){
         docker-compose -f docker-compose-net.yml $DOWN_LIST down
         log "Down all containers"
     fi
-
     popd
+
+    docker_volume_rm "$REDIS_VOLUME"
+
 }
 clean_folders(){
     pushd $HTML_PATH 

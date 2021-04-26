@@ -51,7 +51,9 @@ status_docker(){
     fi
 
     if [[ $docker_rtn -gt 0 ]]; then
-        error "Docker cli return an error: $(cat $TMP_FILE)"
+        Default="$Red"
+        log "Docker cli return an error: $(cat $TMP_FILE)"
+        return 1
     fi
 
     DOCKER_STATUS=$(cat $TMP_FILE| awk '{printf "%s:%s\n", $1, $NF}')
@@ -72,7 +74,9 @@ docker_volume_list(){
     docker_rtn=$?
 
     if [[ $docker_rtn -gt 0 ]]; then
-        error "Docker cli return an error: $(cat $TMP_FILE)"
+        Default="$Red"
+        log "Docker cli return an error: $(cat $TMP_FILE)"
+        return 1
     fi
 
     DOCKER_VOLUME_CNT=$(cat $TMP_FILE | wc -l)
@@ -81,16 +85,27 @@ docker_volume_list(){
     rm -f $TMP_FILE
 }
 
+docker_volume_rm(){
+    volume="${1}"
+
+    [[ -z $volume ]] &&  return 1
+    echo -n "Deleting volume "
+    docker volume rm "$volume"
+    if [[ $? -gt 0 ]]; then
+        error "Cannot delete volume $volume"
+    fi
+ 
+}
+
 docker_volumes_rm(){
     [[ -z $DOCKER_VOLUME_LIST ]] && docker_volume_list
+    echo "$DOCKER_VOLUME_LIST"
 
-    for line in $DOCKER_VOLUME_LIST; do
-        echo -n "Deleting volume "
-        docker volume rm $line 
-        if [[ $? -gt 0 ]]; then
-            error "Cannot delete volume $line"
-        fi
-    done
+    if [[ -n $DOCKER_VOLUME_LIST ]]; then
+        for line in $DOCKER_VOLUME_LIST; do
+            docker_volume_rm "$line"
+        done
+    fi
 }
 
 create_random_key() {

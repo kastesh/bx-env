@@ -71,6 +71,6 @@ VOLUME ["/var/lib/mysql", "/var/log/mysql"]
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
-USER mysql
+USER ${CONTAINER_USER}
 EXPOSE 3306 33060
 CMD ["mysqld"]
