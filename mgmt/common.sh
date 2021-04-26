@@ -66,6 +66,33 @@ status_docker(){
     return $is_service
 }
 
+docker_volume_list(){
+    TMP_FILE=$(mktemp /dev/shm/XXXXX_docker_volumes)
+    docker volume list | grep "bx-env_" > $TMP_FILE 2>&1
+    docker_rtn=$?
+
+    if [[ $docker_rtn -gt 0 ]]; then
+        error "Docker cli return an error: $(cat $TMP_FILE)"
+    fi
+
+    DOCKER_VOLUME_CNT=$(cat $TMP_FILE | wc -l)
+    DOCKER_VOLUME_LIST=$(cat $TMP_FILE | awk '{print $2}')
+
+    rm -f $TMP_FILE
+}
+
+docker_volumes_rm(){
+    [[ -z $DOCKER_VOLUME_LIST ]] && docker_volume_list
+
+    for line in $DOCKER_VOLUME_LIST; do
+        echo -n "Deleting volume "
+        docker volume rm $line 
+        if [[ $? -gt 0 ]]; then
+            error "Cannot delete volume $line"
+        fi
+    done
+}
+
 create_random_key() {
     randLength=32
     rndStr=</dev/urandom tr -dc A-F0-9 | head -c $randLength

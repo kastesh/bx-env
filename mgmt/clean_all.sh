@@ -82,6 +82,11 @@ clean_folders(){
     mkdir -p php7{1,2,3,4} php80 mysql{57,80} nginx push/{sub,pub}
     popd
 
+    pushd $MYSQL_PATH
+    rm -rf mysql57 mysql80
+    mkdir mysql57 mysql80
+    popd
+
 
 }
 # getopts
@@ -110,6 +115,8 @@ source $CONFIG || error "There are no config: $CONFIG"
 [[ -n LOG_DIR ]] && LOG=$LOG_DIR/clear_all.log
 
 down_containers
+
+docker_volumes_rm
 
 clean_folders
 
